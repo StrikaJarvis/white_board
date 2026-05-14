@@ -5,231 +5,34 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>Общедоступная доска для рисования и общения</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            user-select: none;
-        }
-
-        body {
-            background: #1e2a36;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            padding: 20px;
-        }
-
-        .app-container {
-            display: flex;
-            gap: 16px;
-            width: 100%;
-            max-width: 1600px;
-            height: 90vh;
-        }
-
-        /* Основная доска */
-        .board-container {
-            flex: 4;
-            background: white;
-            border-radius: 20px;
-            box-shadow: 0 20px 35px rgba(0,0,0,0.2);
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-        }
-
-        .toolbar {
-            background: #ecf0f1;
-            padding: 10px 15px;
-            display: flex;
-            flex-wrap: wrap;
-            gap: 12px;
-            align-items: center;
-            border-bottom: 2px solid #bdc3c7;
-            max-height: 180px;
-            overflow-y: auto;
-        }
-
-        .tool-group {
-            background: white;
-            border-radius: 30px;
-            padding: 5px 12px;
-            display: flex;
-            gap: 8px;
-            align-items: center;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
-        }
-
-        .tool-btn {
-            background: #ecf0f1;
-            border: none;
-            padding: 6px 14px;
-            border-radius: 30px;
-            cursor: pointer;
-            font-weight: bold;
-            font-size: 13px;
-            transition: 0.2s;
-        }
-
-        .tool-btn.active {
-            background: #3498db;
-            color: white;
-        }
-
-        .color-palette {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 6px;
-            max-width: 260px;
-        }
-
-        .color-btn {
-            width: 28px;
-            height: 28px;
-            border-radius: 50%;
-            cursor: pointer;
-            border: 2px solid transparent;
-        }
-
-        .color-btn.active {
-            border-color: #2c3e50;
-            transform: scale(1.1);
-        }
-
-        .custom-color {
-            display: flex;
-            align-items: center;
-            gap: 5px;
-        }
-
-        #customColorPicker {
-            width: 36px;
-            height: 36px;
-            border-radius: 50%;
-            cursor: pointer;
-            border: 2px solid #bdc3c7;
-        }
-
-        .size-control {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            background: white;
-            padding: 4px 12px;
-            border-radius: 30px;
-        }
-
-        #brushSize {
-            width: 100px;
-        }
-
-        .clear-btn {
-            background: #e74c3c;
-            color: white;
-            border: none;
-            padding: 6px 16px;
-            border-radius: 30px;
-            cursor: pointer;
-            font-weight: bold;
-        }
-
-        canvas {
-            display: block;
-            width: 100%;
-            background: white;
-            cursor: crosshair;
-            touch-action: none;
-            flex: 1;
-        }
-
-        /* Чат */
-        .chat-container {
-            flex: 1;
-            background: #f8f9fa;
-            border-radius: 20px;
-            box-shadow: 0 20px 35px rgba(0,0,0,0.2);
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-            min-width: 260px;
-        }
-
-        .chat-header {
-            background: #2c3e50;
-            color: white;
-            padding: 12px;
-            text-align: center;
-            font-weight: bold;
-        }
-
-        .chat-messages {
-            flex: 1;
-            padding: 12px;
-            overflow-y: auto;
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-        }
-
-        .message {
-            background: white;
-            border-radius: 18px;
-            padding: 6px 12px;
-            max-width: 90%;
-            word-wrap: break-word;
-            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
-        }
-
-        .message .author {
-            font-weight: bold;
-            color: #3498db;
-            font-size: 12px;
-        }
-
-        .message .text {
-            font-size: 14px;
-        }
-
-        .message.system {
-            background: #e9ecef;
-            font-style: italic;
-            text-align: center;
-            font-size: 12px;
-        }
-
-        .chat-input-area {
-            display: flex;
-            padding: 10px;
-            background: white;
-            border-top: 1px solid #dee2e6;
-        }
-
-        #chatInput {
-            flex: 1;
-            padding: 8px;
-            border: 1px solid #ccc;
-            border-radius: 20px;
-            outline: none;
-        }
-
-        #sendChat {
-            background: #3498db;
-            color: white;
-            border: none;
-            border-radius: 20px;
-            padding: 8px 16px;
-            margin-left: 8px;
-            cursor: pointer;
-        }
-
-        @media (max-width: 800px) {
-            .app-container { flex-direction: column; height: auto; }
-            .chat-container { min-height: 300px; }
-            .toolbar { max-height: none; }
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; user-select: none; }
+        body { background: #1e2a36; display: flex; justify-content: center; align-items: center; min-height: 100vh; font-family: 'Segoe UI', sans-serif; padding: 20px; }
+        .app-container { display: flex; gap: 16px; width: 100%; max-width: 1600px; height: 90vh; }
+        .board-container { flex: 4; background: white; border-radius: 20px; box-shadow: 0 20px 35px rgba(0,0,0,0.2); display: flex; flex-direction: column; overflow: hidden; }
+        .toolbar { background: #ecf0f1; padding: 8px 12px; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; border-bottom: 2px solid #bdc3c7; overflow-y: auto; max-height: 140px; }
+        .tool-group { background: white; border-radius: 30px; padding: 4px 10px; display: flex; gap: 6px; align-items: center; box-shadow: 0 1px 3px rgba(0,0,0,0.2); }
+        .tool-btn { background: #ecf0f1; border: none; padding: 5px 12px; border-radius: 30px; cursor: pointer; font-weight: bold; font-size: 13px; transition: 0.2s; }
+        .tool-btn.active { background: #3498db; color: white; }
+        .color-palette { display: flex; flex-wrap: wrap; gap: 5px; max-width: 220px; }
+        .color-btn { width: 26px; height: 26px; border-radius: 50%; cursor: pointer; border: 2px solid transparent; }
+        .color-btn.active { border-color: #2c3e50; transform: scale(1.1); }
+        .custom-color { display: flex; align-items: center; gap: 4px; }
+        #customColorPicker { width: 32px; height: 32px; border-radius: 50%; cursor: pointer; border: 2px solid #bdc3c7; }
+        .size-control { display: flex; align-items: center; gap: 8px; background: white; padding: 4px 10px; border-radius: 30px; }
+        #brushSize { width: 90px; }
+        .clear-btn { background: #e74c3c; color: white; border: none; padding: 5px 14px; border-radius: 30px; cursor: pointer; font-weight: bold; }
+        canvas { display: block; width: 100%; background: white; cursor: crosshair; touch-action: none; flex: 1; }
+        .chat-container { flex: 1; background: #f8f9fa; border-radius: 20px; box-shadow: 0 20px 35px rgba(0,0,0,0.2); display: flex; flex-direction: column; overflow: hidden; min-width: 260px; }
+        .chat-header { background: #2c3e50; color: white; padding: 10px; text-align: center; font-weight: bold; font-size: 14px; }
+        .chat-messages { flex: 1; padding: 10px; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; }
+        .message { background: white; border-radius: 18px; padding: 5px 12px; max-width: 90%; word-wrap: break-word; }
+        .message .author { font-weight: bold; color: #3498db; font-size: 12px; }
+        .message .text { font-size: 13px; }
+        .message.system { background: #e9ecef; font-style: italic; text-align: center; font-size: 11px; }
+        .chat-input-area { display: flex; padding: 8px; background: white; border-top: 1px solid #dee2e6; }
+        #chatInput { flex: 1; padding: 6px; border: 1px solid #ccc; border-radius: 20px; outline: none; font-size: 13px; }
+        #sendChat { background: #3498db; color: white; border: none; border-radius: 20px; padding: 6px 14px; margin-left: 6px; cursor: pointer; }
+        @media (max-width: 800px) { .app-container { flex-direction: column; height: auto; } .chat-container { min-height: 260px; } .toolbar { max-height: none; } }
     </style>
     <script src="/socket.io/socket.io.js"></script>
 </head>
@@ -241,12 +44,12 @@
                 <button id="brushTool" class="tool-btn active">🖌️ Кисть</button>
                 <button id="eraserTool" class="tool-btn">🧽 Ластик</button>
                 <button id="fillTool" class="tool-btn">🪣 Заливка</button>
-                <button id="lineTool" class="tool-btn">📏 Линейка</button>
+                <button id="lineTool" class="tool-btn">📏 Линия</button>
                 <button id="textTool" class="tool-btn">📝 Текст</button>
             </div>
             <div class="tool-group">
-                <button id="circleTool" class="tool-btn">⚪ Круг</button>
                 <button id="rectTool" class="tool-btn">⬛ Квадрат</button>
+                <button id="circleTool" class="tool-btn">⚪ Круг</button>
                 <button id="triangleTool" class="tool-btn">🔺 Треугольник</button>
                 <button id="donutTool" class="tool-btn">🍩 Пончик</button>
             </div>
@@ -276,35 +79,22 @@
 </div>
 
 <script>
-    // ------------------- ИНИЦИАЛИЗАЦИЯ -------------------
+    // ------------------- НАСТРОЙКИ -------------------
     const canvas = document.getElementById('whiteboard');
     const ctx = canvas.getContext('2d');
     const socket = io();
 
-    // Состояние рисования
-    let drawing = false;
-    let currentTool = 'brush';   // brush, eraser, fill, line, text, circle, rect, triangle, donut
+    let currentTool = 'brush';   // brush, eraser, fill, line, text, rect, circle, triangle, donut
     let currentColor = '#000000';
     let currentSize = 5;
+    let drawing = false;
+    let shapeStart = null;          // {x, y} для фигур и линии
+    let previewMode = false;        // используется для отрисовки preview фигуры
     let lastX = 0, lastY = 0;
     let globalHistory = [];
 
-    // Для фигур: запоминаем начальную точку
-    let shapeStart = null;
-
-    // Для текста
-    let textInputActive = false;
-    let textPos = null;
-
-    // Цвета
-    const presetColors = [
-        '#000000', '#2c3e50', '#7f8c8d', '#bdc3c7', '#ffffff',
-        '#e74c3c', '#c0392b', '#ff6b6b', '#ffa502',
-        '#f1c40f', '#f39c12', '#2ecc71', '#27ae60', '#1abc9c',
-        '#3498db', '#2980b9', '#9b59b6', '#8e44ad', '#e84393'
-    ];
-
-    // Создание палитры
+    // ------------------- ЦВЕТА -------------------
+    const presetColors = ['#000000', '#2c3e50', '#7f8c8d', '#bdc3c7', '#ffffff', '#e74c3c', '#c0392b', '#ff6b6b', '#ffa502', '#f1c40f', '#f39c12', '#2ecc71', '#27ae60', '#1abc9c', '#3498db', '#2980b9', '#9b59b6', '#8e44ad', '#e84393'];
     const paletteDiv = document.getElementById('colorPalette');
     presetColors.forEach(color => {
         const btn = document.createElement('div');
@@ -321,7 +111,6 @@
         if (color === '#000000') btn.classList.add('active');
         paletteDiv.appendChild(btn);
     });
-
     const customPicker = document.getElementById('customColorPicker');
     customPicker.addEventListener('input', (e) => {
         if (currentTool === 'eraser') setActiveTool('brush');
@@ -329,39 +118,34 @@
         document.querySelectorAll('.color-btn').forEach(b => b.classList.remove('active'));
     });
 
-    // Размер
-    const sizeSlider = document.getElementById('brushSize');
-    const sizeValue = document.getElementById('sizeValue');
-    sizeSlider.addEventListener('input', (e) => {
-        currentSize = parseInt(e.target.value);
-        sizeValue.textContent = currentSize;
-    });
-
-    // Инструменты
+    // ------------------- ИНСТРУМЕНТЫ -------------------
     const brushBtn = document.getElementById('brushTool');
     const eraserBtn = document.getElementById('eraserTool');
     const fillBtn = document.getElementById('fillTool');
     const lineBtn = document.getElementById('lineTool');
     const textBtn = document.getElementById('textTool');
-    const circleBtn = document.getElementById('circleTool');
     const rectBtn = document.getElementById('rectTool');
+    const circleBtn = document.getElementById('circleTool');
     const triangleBtn = document.getElementById('triangleTool');
     const donutBtn = document.getElementById('donutTool');
+    const sizeSlider = document.getElementById('brushSize');
+    const sizeValue = document.getElementById('sizeValue');
 
     function setActiveTool(tool) {
         currentTool = tool;
-        [brushBtn, eraserBtn, fillBtn, lineBtn, textBtn, circleBtn, rectBtn, triangleBtn, donutBtn].forEach(btn => btn.classList.remove('active'));
+        [brushBtn, eraserBtn, fillBtn, lineBtn, textBtn, rectBtn, circleBtn, triangleBtn, donutBtn].forEach(btn => btn.classList.remove('active'));
         if (tool === 'brush') brushBtn.classList.add('active');
         if (tool === 'eraser') eraserBtn.classList.add('active');
         if (tool === 'fill') fillBtn.classList.add('active');
         if (tool === 'line') lineBtn.classList.add('active');
         if (tool === 'text') textBtn.classList.add('active');
-        if (tool === 'circle') circleBtn.classList.add('active');
         if (tool === 'rect') rectBtn.classList.add('active');
+        if (tool === 'circle') circleBtn.classList.add('active');
         if (tool === 'triangle') triangleBtn.classList.add('active');
         if (tool === 'donut') donutBtn.classList.add('active');
-        if (tool === 'eraser') drawing = false; // не рисуем случайно
         shapeStart = null;
+        drawing = false;
+        if (previewMode) cancelPreview();
     }
 
     brushBtn.addEventListener('click', () => setActiveTool('brush'));
@@ -369,284 +153,373 @@
     fillBtn.addEventListener('click', () => setActiveTool('fill'));
     lineBtn.addEventListener('click', () => setActiveTool('line'));
     textBtn.addEventListener('click', () => setActiveTool('text'));
-    circleBtn.addEventListener('click', () => setActiveTool('circle'));
     rectBtn.addEventListener('click', () => setActiveTool('rect'));
+    circleBtn.addEventListener('click', () => setActiveTool('circle'));
     triangleBtn.addEventListener('click', () => setActiveTool('triangle'));
     donutBtn.addEventListener('click', () => setActiveTool('donut'));
+    sizeSlider.addEventListener('input', (e) => { currentSize = parseInt(e.target.value); sizeValue.textContent = currentSize; });
 
-    // ------------------- ОСНОВНЫЕ ФУНКЦИИ РИСОВАНИЯ -------------------
-    function drawOnCanvas(data, addToHistory = false) {
-        if (data.type === 'line' && data.x0 !== undefined && data.x1 !== undefined) {
-            ctx.beginPath();
-            ctx.moveTo(data.x0, data.y0);
-            ctx.lineTo(data.x1, data.y1);
-            ctx.strokeStyle = data.color;
-            ctx.lineWidth = data.size;
-            ctx.stroke();
-        } 
-        else if (data.type === 'circle' && data.x && data.y && data.radius) {
-            ctx.beginPath();
-            ctx.arc(data.x, data.y, data.radius, 0, 2 * Math.PI);
-            if (data.fill) {
-                ctx.fillStyle = data.color;
-                ctx.fill();
-            } else {
-                ctx.strokeStyle = data.color;
-                ctx.lineWidth = data.size;
-                ctx.stroke();
-            }
-        }
-        else if (data.type === 'rect' && data.x && data.y && data.w && data.h) {
-            if (data.fill) {
-                ctx.fillStyle = data.color;
-                ctx.fillRect(data.x, data.y, data.w, data.h);
-            } else {
-                ctx.strokeStyle = data.color;
-                ctx.lineWidth = data.size;
-                ctx.strokeRect(data.x, data.y, data.w, data.h);
-            }
-        }
-        else if (data.type === 'triangle' && data.points) {
-            ctx.beginPath();
-            ctx.moveTo(data.points[0].x, data.points[0].y);
-            ctx.lineTo(data.points[1].x, data.points[1].y);
-            ctx.lineTo(data.points[2].x, data.points[2].y);
-            ctx.closePath();
-            if (data.fill) {
-                ctx.fillStyle = data.color;
-                ctx.fill();
-            } else {
-                ctx.strokeStyle = data.color;
-                ctx.lineWidth = data.size;
-                ctx.stroke();
-            }
-        }
-        else if (data.type === 'donut' && data.x && data.y && data.outerR && data.innerR) {
-            ctx.beginPath();
-            ctx.arc(data.x, data.y, data.outerR, 0, 2 * Math.PI);
-            if (data.fill) {
-                ctx.fillStyle = data.color;
-                ctx.fill();
-            } else {
-                ctx.strokeStyle = data.color;
-                ctx.lineWidth = data.size;
-                ctx.stroke();
-            }
-            ctx.beginPath();
-            ctx.arc(data.x, data.y, data.innerR, 0, 2 * Math.PI);
-            ctx.fillStyle = '#ffffff';
-            ctx.fill();
-        }
-        else if (data.type === 'text' && data.x && data.y && data.text) {
-            ctx.font = `${data.size * 2}px "Segoe UI"`;
-            ctx.fillStyle = data.color;
-            ctx.fillText(data.text, data.x, data.y);
-            // рамка
-            const metrics = ctx.measureText(data.text);
-            const width = metrics.width;
-            const height = data.size * 2;
-            ctx.strokeStyle = data.color;
-            ctx.lineWidth = 1;
-            ctx.strokeRect(data.x - 5, data.y - height + 5, width + 10, height + 5);
-        }
-        else if (data.type === 'fill' && data.x !== undefined && data.y !== undefined) {
-            floodFill(data.x, data.y, data.color);
-            return; // floodFill уже перерисовывает, но добавим историю отдельно
-        }
-        else if (data.type === 'stroke' && data.x0 !== undefined) {
-            // обычная линия (кисть/ластик)
-            ctx.beginPath();
-            ctx.moveTo(data.x0, data.y0);
-            ctx.lineTo(data.x1, data.y1);
-            ctx.strokeStyle = data.color;
-            ctx.lineWidth = data.size;
-            ctx.stroke();
-        }
-
-        if (addToHistory && data.type !== 'fill') {
+    // ------------------- ФУНКЦИИ РИСОВАНИЯ (СОХРАНЕНИЕ ИСТОРИИ) -------------------
+    function drawStroke(data, addToHistory = false) {
+        if (!data.x0 && !data.x1) return;
+        ctx.beginPath();
+        ctx.moveTo(data.x0, data.y0);
+        ctx.lineTo(data.x1, data.y1);
+        ctx.strokeStyle = data.color;
+        ctx.lineWidth = data.size;
+        ctx.lineCap = 'round';
+        ctx.stroke();
+        if (addToHistory) {
             globalHistory.push(data);
             socket.emit('draw', data);
         }
     }
 
-    // Исправленная заливка (асинхронная, без зависаний)
-    function floodFill(startX, startY, fillColor) {
+    function drawRect(data, addToHistory = false) {
+        if (data.fill) {
+            ctx.fillStyle = data.color;
+            ctx.fillRect(data.x, data.y, data.w, data.h);
+        } else {
+            ctx.strokeStyle = data.color;
+            ctx.lineWidth = data.size;
+            ctx.strokeRect(data.x, data.y, data.w, data.h);
+        }
+        if (addToHistory) {
+            globalHistory.push(data);
+            socket.emit('draw', data);
+        }
+    }
+
+    function drawCircle(data, addToHistory = false) {
+        ctx.beginPath();
+        ctx.arc(data.x, data.y, data.radius, 0, 2 * Math.PI);
+        if (data.fill) {
+            ctx.fillStyle = data.color;
+            ctx.fill();
+        } else {
+            ctx.strokeStyle = data.color;
+            ctx.lineWidth = data.size;
+            ctx.stroke();
+        }
+        if (addToHistory) {
+            globalHistory.push(data);
+            socket.emit('draw', data);
+        }
+    }
+
+    function drawLine(data, addToHistory = false) {
+        ctx.beginPath();
+        ctx.moveTo(data.x0, data.y0);
+        ctx.lineTo(data.x1, data.y1);
+        ctx.strokeStyle = data.color;
+        ctx.lineWidth = data.size;
+        ctx.stroke();
+        if (addToHistory) {
+            globalHistory.push(data);
+            socket.emit('draw', data);
+        }
+    }
+
+    function drawTriangle(data, addToHistory = false) {
+        ctx.beginPath();
+        ctx.moveTo(data.points[0].x, data.points[0].y);
+        ctx.lineTo(data.points[1].x, data.points[1].y);
+        ctx.lineTo(data.points[2].x, data.points[2].y);
+        ctx.closePath();
+        if (data.fill) {
+            ctx.fillStyle = data.color;
+            ctx.fill();
+        } else {
+            ctx.strokeStyle = data.color;
+            ctx.lineWidth = data.size;
+            ctx.stroke();
+        }
+        if (addToHistory) {
+            globalHistory.push(data);
+            socket.emit('draw', data);
+        }
+    }
+
+    function drawDonut(data, addToHistory = false) {
+        ctx.beginPath();
+        ctx.arc(data.x, data.y, data.outerR, 0, 2 * Math.PI);
+        if (data.fill) {
+            ctx.fillStyle = data.color;
+            ctx.fill();
+        } else {
+            ctx.strokeStyle = data.color;
+            ctx.lineWidth = data.size;
+            ctx.stroke();
+        }
+        ctx.beginPath();
+        ctx.arc(data.x, data.y, data.innerR, 0, 2 * Math.PI);
+        ctx.fillStyle = '#ffffff';
+        ctx.fill();
+        if (addToHistory) {
+            globalHistory.push(data);
+            socket.emit('draw', data);
+        }
+    }
+
+    function drawText(data, addToHistory = false) {
+        ctx.font = `${Math.max(12, data.size * 2)}px "Segoe UI"`;
+        ctx.fillStyle = data.color;
+        ctx.fillText(data.text, data.x, data.y);
+        const metrics = ctx.measureText(data.text);
+        const width = metrics.width;
+        const height = data.size * 2;
+        ctx.strokeStyle = data.color;
+        ctx.lineWidth = 1;
+        ctx.strokeRect(data.x - 4, data.y - height + 4, width + 8, height + 4);
+        if (addToHistory) {
+            globalHistory.push(data);
+            socket.emit('draw', data);
+        }
+    }
+
+    async function floodFill(startX, startY, fillColor) {
+        // асинхронная заливка, не блокирует UI
         const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
         const data = imageData.data;
-        const targetColor = getPixelColor(data, Math.floor(startX), Math.floor(startY), canvas.width);
-        const fillRGB = hexToRgb(fillColor);
-        if (!targetColor || !fillRGB) return;
-        if (colorsMatch(targetColor, fillRGB)) return;
+        const target = getPixelColor(data, Math.floor(startX), Math.floor(startY), canvas.width);
+        const fill = hexToRgb(fillColor);
+        if (!target || !fill) return;
+        if (target.r === fill.r && target.g === fill.g && target.b === fill.b) return;
 
         const stack = [{x: Math.floor(startX), y: Math.floor(startY)}];
         const visited = new Set();
-        const width = canvas.width;
-        const height = canvas.height;
-
+        const w = canvas.width, h = canvas.height;
         while (stack.length) {
             const {x, y} = stack.pop();
-            const idx = (y * width + x) * 4;
+            const idx = (y * w + x) * 4;
             if (idx < 0 || idx >= data.length) continue;
-            const current = {r: data[idx], g: data[idx+1], b: data[idx+2]};
-            if (!colorsMatch(current, targetColor)) continue;
+            const cur = {r: data[idx], g: data[idx+1], b: data[idx+2]};
+            if (cur.r !== target.r || cur.g !== target.g || cur.b !== target.b) continue;
             const key = `${x},${y}`;
             if (visited.has(key)) continue;
             visited.add(key);
-            data[idx] = fillRGB.r;
-            data[idx+1] = fillRGB.g;
-            data[idx+2] = fillRGB.b;
+            data[idx] = fill.r;
+            data[idx+1] = fill.g;
+            data[idx+2] = fill.b;
             data[idx+3] = 255;
             if (x > 0) stack.push({x: x-1, y});
-            if (x < width-1) stack.push({x: x+1, y});
+            if (x < w-1) stack.push({x: x+1, y});
             if (y > 0) stack.push({x, y: y-1});
-            if (y < height-1) stack.push({x, y: y+1});
+            if (y < h-1) stack.push({x, y: y+1});
         }
         ctx.putImageData(imageData, 0, 0);
-        // Сохраняем событие заливки в историю
         const fillEvent = { type: 'fill', x: startX, y: startY, color: fillColor };
         globalHistory.push(fillEvent);
         socket.emit('fill', fillEvent);
     }
 
-    function getPixelColor(data, x, y, width) {
-        const idx = (y * width + x) * 4;
+    function getPixelColor(data, x, y, w) {
+        const idx = (y * w + x) * 4;
         if (idx < 0 || idx >= data.length) return null;
         return {r: data[idx], g: data[idx+1], b: data[idx+2]};
     }
-
-    function colorsMatch(c1, c2) {
-        return c1.r === c2.r && c1.g === c2.g && c1.b === c2.b;
-    }
-
     function hexToRgb(hex) {
-        const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-        return result ? { r: parseInt(result[1], 16), g: parseInt(result[2], 16), b: parseInt(result[3], 16) } : null;
+        const res = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+        return res ? {r: parseInt(res[1],16), g: parseInt(res[2],16), b: parseInt(res[3],16)} : null;
     }
 
-    // Координаты мыши
-    function getCanvasCoords(e) {
+    // ------------------- PREVIEW ФИГУР -------------------
+    let previewCtx = null;
+    let previewCanvas = null;
+
+    function startPreview() {
+        if (previewCanvas) return;
+        previewCanvas = document.createElement('canvas');
+        previewCanvas.width = canvas.width;
+        previewCanvas.height = canvas.height;
+        previewCtx = previewCanvas.getContext('2d');
+        previewCtx.lineCap = 'round';
+        document.body.style.cursor = 'crosshair';
+    }
+
+    function updatePreview(currentPoint) {
+        if (!shapeStart || !previewCanvas) return;
+        previewCtx.clearRect(0, 0, canvas.width, canvas.height);
+        // копируем текущий холст на preview, чтобы не мерцало
+        previewCtx.drawImage(canvas, 0, 0);
+        const start = shapeStart;
+        const end = currentPoint;
+        previewCtx.save();
+        previewCtx.strokeStyle = currentColor;
+        previewCtx.fillStyle = currentColor;
+        previewCtx.lineWidth = currentSize;
+        if (currentTool === 'rect') {
+            const w = end.x - start.x;
+            const h = end.y - start.y;
+            previewCtx.strokeRect(start.x, start.y, w, h);
+        } else if (currentTool === 'circle') {
+            const radius = Math.hypot(end.x - start.x, end.y - start.y);
+            previewCtx.beginPath();
+            previewCtx.arc(start.x, start.y, radius, 0, 2*Math.PI);
+            previewCtx.stroke();
+        } else if (currentTool === 'line') {
+            previewCtx.beginPath();
+            previewCtx.moveTo(start.x, start.y);
+            previewCtx.lineTo(end.x, end.y);
+            previewCtx.stroke();
+        } else if (currentTool === 'triangle') {
+            const dx = end.x - start.x;
+            const dy = end.y - start.y;
+            const p1 = start;
+            const p2 = {x: end.x, y: end.y};
+            const p3 = {x: start.x - dx, y: end.y};
+            previewCtx.beginPath();
+            previewCtx.moveTo(p1.x, p1.y);
+            previewCtx.lineTo(p2.x, p2.y);
+            previewCtx.lineTo(p3.x, p3.y);
+            previewCtx.closePath();
+            previewCtx.stroke();
+        } else if (currentTool === 'donut') {
+            const outerR = Math.hypot(end.x - start.x, end.y - start.y);
+            const innerR = outerR / 2;
+            previewCtx.beginPath();
+            previewCtx.arc(start.x, start.y, outerR, 0, 2*Math.PI);
+            previewCtx.stroke();
+            previewCtx.beginPath();
+            previewCtx.arc(start.x, start.y, innerR, 0, 2*Math.PI);
+            previewCtx.fillStyle = 'rgba(255,255,255,0.8)';
+            previewCtx.fill();
+        }
+        previewCtx.restore();
+        // временно показываем preview поверх основного холста
+        const tempDisplay = () => {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.drawImage(previewCanvas, 0, 0);
+        };
+        tempDisplay();
+    }
+
+    function cancelPreview() {
+        if (previewCanvas) {
+            redrawFull();
+            previewCanvas = null;
+            previewCtx = null;
+        }
+    }
+
+    function commitShape(endPoint) {
+        if (!shapeStart) return;
+        const start = shapeStart;
+        let data = null;
+        if (currentTool === 'rect') {
+            data = { type: 'rect', x: start.x, y: start.y, w: endPoint.x - start.x, h: endPoint.y - start.y, color: currentColor, size: currentSize, fill: false };
+            drawRect(data, true);
+        } else if (currentTool === 'circle') {
+            const radius = Math.hypot(endPoint.x - start.x, endPoint.y - start.y);
+            data = { type: 'circle', x: start.x, y: start.y, radius: radius, color: currentColor, size: currentSize, fill: false };
+            drawCircle(data, true);
+        } else if (currentTool === 'line') {
+            data = { type: 'line', x0: start.x, y0: start.y, x1: endPoint.x, y1: endPoint.y, color: currentColor, size: currentSize };
+            drawLine(data, true);
+        } else if (currentTool === 'triangle') {
+            const dx = endPoint.x - start.x;
+            const dy = endPoint.y - start.y;
+            const points = [ start, {x: endPoint.x, y: endPoint.y}, {x: start.x - dx, y: endPoint.y} ];
+            data = { type: 'triangle', points: points, color: currentColor, size: currentSize, fill: false };
+            drawTriangle(data, true);
+        } else if (currentTool === 'donut') {
+            const outerR = Math.hypot(endPoint.x - start.x, endPoint.y - start.y);
+            data = { type: 'donut', x: start.x, y: start.y, outerR: outerR, innerR: outerR/2, color: currentColor, size: currentSize, fill: true };
+            drawDonut(data, true);
+        }
+        shapeStart = null;
+        cancelPreview();
+    }
+
+    // ------------------- ОБРАБОТЧИКИ МЫШИ -------------------
+    function getCoords(e) {
         const rect = canvas.getBoundingClientRect();
         const scaleX = canvas.width / rect.width;
         const scaleY = canvas.height / rect.height;
-        let clientX, clientY;
+        let cx, cy;
         if (e.touches) {
-            clientX = e.touches[0].clientX;
-            clientY = e.touches[0].clientY;
+            cx = e.touches[0].clientX;
+            cy = e.touches[0].clientY;
         } else {
-            clientX = e.clientX;
-            clientY = e.clientY;
+            cx = e.clientX;
+            cy = e.clientY;
         }
-        let canvasX = (clientX - rect.left) * scaleX;
-        let canvasY = (clientY - rect.top) * scaleY;
-        canvasX = Math.min(Math.max(0, canvasX), canvas.width);
-        canvasY = Math.min(Math.max(0, canvasY), canvas.height);
-        return {x: canvasX, y: canvasY};
+        let x = (cx - rect.left) * scaleX;
+        let y = (cy - rect.top) * scaleY;
+        x = Math.min(Math.max(0, x), canvas.width);
+        y = Math.min(Math.max(0, y), canvas.height);
+        return {x, y};
     }
 
-    // Рисование линий/фигур
-    function startDrawing(e) {
+    function onMouseDown(e) {
+        e.preventDefault();
+        const point = getCoords(e);
         if (currentTool === 'fill') {
-            const {x, y} = getCanvasCoords(e);
-            floodFill(x, y, currentColor);
+            floodFill(point.x, point.y, currentColor);
             return;
         }
         if (currentTool === 'text') {
-            const {x, y} = getCanvasCoords(e);
-            showTextInput(x, y);
+            showTextInput(point.x, point.y);
             return;
         }
-        if (['circle', 'rect', 'triangle', 'donut', 'line'].includes(currentTool)) {
-            shapeStart = getCanvasCoords(e);
+        if (['rect', 'circle', 'line', 'triangle', 'donut'].includes(currentTool)) {
+            shapeStart = point;
             drawing = true;
+            startPreview();
             return;
         }
-        // Кисть или ластик
+        // кисть и ластик
         drawing = true;
-        const {x, y} = getCanvasCoords(e);
-        lastX = x;
-        lastY = y;
+        lastX = point.x;
+        lastY = point.y;
         const color = (currentTool === 'eraser') ? '#ffffff' : currentColor;
-        const pointEvent = { type: 'stroke', x0: x, y0: y, x1: x, y1: y, color: color, size: currentSize };
-        drawOnCanvas(pointEvent, true);
+        const dot = { type: 'stroke', x0: lastX, y0: lastY, x1: lastX, y1: lastY, color: color, size: currentSize };
+        drawStroke(dot, true);
     }
 
-    function draw(e) {
+    function onMouseMove(e) {
         if (!drawing) return;
         e.preventDefault();
-        const {x, y} = getCanvasCoords(e);
-        if (currentTool === 'line' && shapeStart) {
-            // предпросмотр? Не будем усложнять, просто фиксируем линию по отпусканию
+        const point = getCoords(e);
+        if (shapeStart && ['rect','circle','line','triangle','donut'].includes(currentTool)) {
+            updatePreview(point);
             return;
         }
-        if (['circle', 'rect', 'triangle', 'donut'].includes(currentTool) && shapeStart) {
-            return; // фигура завершится на mouseup
-        }
-        // Кисть или ластик
+        // кисть
         const color = (currentTool === 'eraser') ? '#ffffff' : currentColor;
-        const lineEvent = { type: 'stroke', x0: lastX, y0: lastY, x1: x, y1: y, color: color, size: currentSize };
-        drawOnCanvas(lineEvent, true);
-        lastX = x;
-        lastY = y;
+        const line = { type: 'stroke', x0: lastX, y0: lastY, x1: point.x, y1: point.y, color: color, size: currentSize };
+        drawStroke(line, true);
+        lastX = point.x;
+        lastY = point.y;
     }
 
-    function stopDrawing(e) {
-        if (!drawing) {
-            drawing = false;
-            shapeStart = null;
-            return;
-        }
-        if (shapeStart && ['circle', 'rect', 'triangle', 'donut', 'line'].includes(currentTool)) {
-            const endPoint = getCanvasCoords(e);
-            const start = shapeStart;
-            if (currentTool === 'line') {
-                const lineData = { type: 'line', x0: start.x, y0: start.y, x1: endPoint.x, y1: endPoint.y, color: currentColor, size: currentSize };
-                drawOnCanvas(lineData, true);
-            }
-            else if (currentTool === 'circle') {
-                const radius = Math.hypot(endPoint.x - start.x, endPoint.y - start.y);
-                const circleData = { type: 'circle', x: start.x, y: start.y, radius: radius, color: currentColor, size: currentSize, fill: false };
-                drawOnCanvas(circleData, true);
-            }
-            else if (currentTool === 'rect') {
-                const w = endPoint.x - start.x;
-                const h = endPoint.y - start.y;
-                const rectData = { type: 'rect', x: start.x, y: start.y, w: w, h: h, color: currentColor, size: currentSize, fill: false };
-                drawOnCanvas(rectData, true);
-            }
-            else if (currentTool === 'triangle') {
-                const points = [
-                    { x: start.x, y: start.y },
-                    { x: endPoint.x, y: endPoint.y },
-                    { x: start.x - (endPoint.x - start.x), y: endPoint.y }
-                ];
-                const triData = { type: 'triangle', points: points, color: currentColor, size: currentSize, fill: false };
-                drawOnCanvas(triData, true);
-            }
-            else if (currentTool === 'donut') {
-                const outerR = Math.hypot(endPoint.x - start.x, endPoint.y - start.y);
-                const innerR = outerR / 2;
-                const donutData = { type: 'donut', x: start.x, y: start.y, outerR: outerR, innerR: innerR, color: currentColor, size: currentSize, fill: true };
-                drawOnCanvas(donutData, true);
-            }
-            shapeStart = null;
+    function onMouseUp(e) {
+        if (shapeStart && drawing && ['rect','circle','line','triangle','donut'].includes(currentTool)) {
+            const end = getCoords(e);
+            commitShape(end);
         }
         drawing = false;
         shapeStart = null;
+        cancelPreview();
     }
 
     // Текст
+    let textActive = false;
     function showTextInput(x, y) {
-        if (textInputActive) return;
-        textPos = {x, y};
+        if (textActive) return;
         const inputDiv = document.createElement('div');
         inputDiv.style.position = 'absolute';
-        inputDiv.style.left = `${x}px`;
-        inputDiv.style.top = `${y}px`;
+        const rect = canvas.getBoundingClientRect();
+        const scaleX = canvas.width / rect.width;
+        const scaleY = canvas.height / rect.height;
+        const left = rect.left + (x / scaleX);
+        const top = rect.top + (y / scaleY);
+        inputDiv.style.left = `${left}px`;
+        inputDiv.style.top = `${top}px`;
         inputDiv.style.zIndex = 1000;
         const input = document.createElement('input');
         input.type = 'text';
-        input.placeholder = 'Введите текст...';
-        input.style.fontSize = `${currentSize * 2}px`;
+        input.style.fontSize = `${Math.max(12, currentSize * 2)}px`;
         input.style.border = '2px solid #3498db';
         input.style.borderRadius = '8px';
         input.style.padding = '4px';
@@ -658,113 +531,74 @@
             if (e.key === 'Enter') {
                 const text = input.value.trim();
                 if (text) {
-                    const textData = { type: 'text', x: textPos.x, y: textPos.y, text: text, color: currentColor, size: currentSize };
-                    drawOnCanvas(textData, true);
+                    const textData = { type: 'text', x: x, y: y, text: text, color: currentColor, size: currentSize };
+                    drawText(textData, true);
                 }
                 inputDiv.remove();
-                textInputActive = false;
+                textActive = false;
             }
         });
-        input.addEventListener('blur', () => {
-            inputDiv.remove();
-            textInputActive = false;
-        });
-        textInputActive = true;
+        input.addEventListener('blur', () => { inputDiv.remove(); textActive = false; });
+        textActive = true;
     }
 
-    // Чат
-    const chatMessages = document.getElementById('chatMessages');
+    // ------------------- ЧАТ -------------------
+    const chatMessagesDiv = document.getElementById('chatMessages');
     const chatInput = document.getElementById('chatInput');
-    const sendChatBtn = document.getElementById('sendChat');
-
-    function addMessage(username, message, isSystem = false) {
-        const msgDiv = document.createElement('div');
-        msgDiv.className = isSystem ? 'message system' : 'message';
-        if (!isSystem) {
-            msgDiv.innerHTML = `<span class="author">${username}:</span> <span class="text">${message}</span>`;
-        } else {
-            msgDiv.innerText = message;
-        }
-        chatMessages.appendChild(msgDiv);
-        chatMessages.scrollTop = chatMessages.scrollHeight;
+    const sendChat = document.getElementById('sendChat');
+    function addChatMessage(username, message, isSystem = false) {
+        const div = document.createElement('div');
+        div.className = isSystem ? 'message system' : 'message';
+        if (!isSystem) div.innerHTML = `<span class="author">${username}:</span> <span class="text">${message}</span>`;
+        else div.innerText = message;
+        chatMessagesDiv.appendChild(div);
+        chatMessagesDiv.scrollTop = chatMessagesDiv.scrollHeight;
     }
-
-    sendChatBtn.addEventListener('click', () => {
+    sendChat.addEventListener('click', () => {
         const msg = chatInput.value.trim();
-        if (msg) {
-            socket.emit('chatMessage', msg);
-            chatInput.value = '';
-        }
+        if (msg) { socket.emit('chatMessage', msg); chatInput.value = ''; }
     });
-    chatInput.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') sendChatBtn.click();
-    });
+    chatInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') sendChat.click(); });
+    socket.on('chatMessage', (data) => addChatMessage(data.username, data.message));
+    socket.on('userJoined', (name) => addChatMessage('', `${name} присоединился`, true));
+    socket.on('userLeft', (name) => addChatMessage('', `${name} покинул доску`, true));
 
-    socket.on('chatMessage', (data) => {
-        addMessage(data.username, data.message);
-    });
-    socket.on('userJoined', (username) => {
-        addMessage('', `${username} присоединился к доске`, true);
-    });
-    socket.on('userLeft', (username) => {
-        addMessage('', `${username} покинул доску`, true);
-    });
-
-    // Глобальная перерисовка
+    // ------------------- СЕТЬ -------------------
     function redrawFull() {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
-        for (let event of globalHistory) {
-            if (event.type === 'fill') {
-                floodFill(event.x, event.y, event.color);
-            } else {
-                drawOnCanvas(event, false);
-            }
+        for (let ev of globalHistory) {
+            if (ev.type === 'fill') floodFill(ev.x, ev.y, ev.color);
+            else if (ev.type === 'rect') drawRect(ev, false);
+            else if (ev.type === 'circle') drawCircle(ev, false);
+            else if (ev.type === 'line') drawLine(ev, false);
+            else if (ev.type === 'triangle') drawTriangle(ev, false);
+            else if (ev.type === 'donut') drawDonut(ev, false);
+            else if (ev.type === 'text') drawText(ev, false);
+            else if (ev.type === 'stroke') drawStroke(ev, false);
         }
     }
+
+    socket.on('loadHistory', (history) => { globalHistory = history; resizeCanvas(); });
+    socket.on('draw', (data) => { globalHistory.push(data); if (data.type === 'fill') floodFill(data.x, data.y, data.color); else if (data.type === 'rect') drawRect(data, false); else if (data.type === 'circle') drawCircle(data, false); else if (data.type === 'line') drawLine(data, false); else if (data.type === 'triangle') drawTriangle(data, false); else if (data.type === 'donut') drawDonut(data, false); else if (data.type === 'text') drawText(data, false); else if (data.type === 'stroke') drawStroke(data, false); });
+    socket.on('fill', (data) => { globalHistory.push(data); floodFill(data.x, data.y, data.color); });
+    socket.on('clear', () => { globalHistory = []; ctx.clearRect(0, 0, canvas.width, canvas.height); });
+    document.getElementById('clearBtn').addEventListener('click', () => { globalHistory = []; ctx.clearRect(0, 0, canvas.width, canvas.height); socket.emit('clear'); });
 
     function resizeCanvas() {
         const container = canvas.parentElement;
-        const width = Math.min(1600, container.clientWidth - 40);
-        const height = width * (900/1600);
-        canvas.width = width;
-        canvas.height = height;
+        const w = Math.min(1600, container.clientWidth - 40);
+        const h = w * (900/1600);
+        canvas.width = w;
+        canvas.height = h;
         redrawFull();
     }
-
-    // Сокеты
-    socket.on('loadHistory', (history) => {
-        globalHistory = history;
-        resizeCanvas();
-    });
-    socket.on('draw', (data) => {
-        globalHistory.push(data);
-        drawOnCanvas(data, false);
-    });
-    socket.on('fill', (data) => {
-        globalHistory.push(data);
-        floodFill(data.x, data.y, data.color);
-    });
-    socket.on('clear', () => {
-        globalHistory = [];
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-    });
-
-    document.getElementById('clearBtn').addEventListener('click', () => {
-        globalHistory = [];
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        socket.emit('clear');
-    });
-
-    // События мыши/касаний
-    canvas.addEventListener('mousedown', startDrawing);
-    canvas.addEventListener('mousemove', draw);
-    canvas.addEventListener('mouseup', stopDrawing);
-    canvas.addEventListener('mouseleave', stopDrawing);
-    canvas.addEventListener('touchstart', startDrawing);
-    canvas.addEventListener('touchmove', draw);
-    canvas.addEventListener('touchend', stopDrawing);
-    canvas.addEventListener('touchcancel', stopDrawing);
-
+    canvas.addEventListener('mousedown', onMouseDown);
+    canvas.addEventListener('mousemove', onMouseMove);
+    canvas.addEventListener('mouseup', onMouseUp);
+    canvas.addEventListener('mouseleave', onMouseUp);
+    canvas.addEventListener('touchstart', onMouseDown);
+    canvas.addEventListener('touchmove', onMouseMove);
+    canvas.addEventListener('touchend', onMouseUp);
     window.addEventListener('resize', resizeCanvas);
     resizeCanvas();
 </script>
