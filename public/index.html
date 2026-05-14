@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Онлайн доска для рисования</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            user-select: none;
+        }
+
+        body {
+            background: #2c3e50;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 35px rgba(0,0,0,0.2);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+            max-width: 1200px;
+        }
+
+        .toolbar {
+            background: #ecf0f1;
+            padding: 12px 20px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 2px solid #bdc3c7;
+        }
+
+        .tools {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .color-picker {
+            display: flex;
+            gap: 8px;
+        }
+
+        .color-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: 0.2s;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+
+        .color-btn.active {
+            border-color: #2c3e50;
+            transform: scale(1.1);
+        }
+
+        .color-btn.black { background: #2c3e50; }
+        .color-btn.red { background: #e74c3c; }
+        .color-btn.green { background: #2ecc71; }
+        .color-btn.blue { background: #3498db; }
+        .color-btn.yellow { background: #f1c40f; }
+
+        .size-control {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: white;
+            padding: 5px 12px;
+            border-radius: 40px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+        }
+
+        .size-control label {
+            font-weight: bold;
+            color: #2c3e50;
+        }
+
+        #brushSize {
+            width: 80px;
+        }
+
+        button {
+            background: #3498db;
+            border: none;
+            color: white;
+            padding: 8px 20px;
+            border-radius: 30px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: 0.2s;
+            font-size: 14px;
+        }
+
+        button:hover {
+            background: #2980b9;
+            transform: scale(1.02);
+        }
+
+        .info {
+            background: #f39c12;
+            padding: 6px 12px;
+            border-radius: 30px;
+            color: white;
+            font-size: 14px;
+            font-weight: bold;
+        }
+
+        canvas {
+            display: block;
+            width: 100%;
+            background: white;
+            cursor: crosshair;
+            touch-action: none; /* улучшение для touch */
+        }
+
+        @media (max-width: 700px) {
+            .toolbar {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .tools {
+                justify-content: center;
+            }
+            .color-btn {
+                width: 35px;
+                height: 35px;
+            }
+        }
+    </style>
+    <script src="/socket.io/socket.io.js"></script>
+</head>
+<body>
+<div class="container">
+    <div class="toolbar">
+        <div class="tools">
+            <div class="color-picker">
+                <div class="color-btn black active" data-color="#2c3e50"></div>
+                <div class="color-btn red" data-color="#e74c3c"></div>
+                <div class="color-btn green" data-color="#2ecc71"></div>
+                <div class="color-btn blue" data-color="#3498db"></div>
+                <div class="color-btn yellow" data-color="#f1c40f"></div>
+            </div>
+            <div class="size-control">
+                <label>✏️ Толщина:</label>
+                <input type="range" id="brushSize" min="2" max="40" value="5">
+                <span id="sizeValue">5</span>
+            </div>
+            <button id="clearBtn">🧽 Очистить всё</button>
+        </div>
+        <div class="info">
+            👥 Рисуйте вместе – изменения видны у всех
+        </div>
+    </div>
+    <canvas id="whiteboard" width="1000" height="600" style="width:100%; height:auto; aspect-ratio:1000/600"></canvas>
+</div>
+
+<script>
+    // DOM элементы
+    const canvas = document.getElementById('whiteboard');
+    const ctx = canvas.getContext('2d');
+    const socket = io();
+
+    // Настройки рисования
+    let drawing = false;
+    let currentColor = '#2c3e50';
+    let currentSize = 5;
+    let lastX = 0, lastY = 0;
+
+    // Работа с размерами canvas (сохраняем реальное разрешение)
+    function resizeCanvas() {
+        const rect = canvas.parentElement.getBoundingClientRect();
+        // Устанавливаем размер canvas в пикселях с учётом чёткости
+        const width = Math.min(1200, rect.width - 40);
+        const height = width * 0.6; // сохраняем пропорции 1000/600
+        canvas.width = width;
+        canvas.height = height;
+        // После изменения размера нужно перерисовать всё из истории
+        redrawFromHistory();
+    }
+
+    // Перерисовка всей доски из глобальной истории (полученной от сервера)
+    let globalHistory = []; // хранит все события рисования на этом клиенте
+
+    function redrawFromHistory() {
+        // Очищаем canvas
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        // Рисуем каждое событие из истории
+        globalHistory.forEach(event => {
+            drawOnCanvas(event, false); // false = не сохранять в историю повторно
+        });
+    }
+
+    // Функция рисования линии на canvas
+    function drawOnCanvas(data, addToHistory = false) {
+        if (!data.x0 || !data.y0 || !data.x1 || !data.y1) return;
+        ctx.beginPath();
+        ctx.moveTo(data.x0, data.y0);
+        ctx.lineTo(data.x1, data.y1);
+        ctx.strokeStyle = data.color;
+        ctx.lineWidth = data.size;
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+        ctx.stroke();
+
+        if (addToHistory) {
+            // сохраняем локально и отправляем на сервер
+            globalHistory.push(data);
+            socket.emit('draw', data);
+        }
+    }
+
+    // Получение координат относительно canvas (с учётом масштаба)
+    function getCanvasCoords(e) {
+        const rect = canvas.getBoundingClientRect();
+        const scaleX = canvas.width / rect.width;   // canvas физические пиксели / CSS ширина
+        const scaleY = canvas.height / rect.height;
+
+        let clientX, clientY;
+        if (e.touches) {
+            // touch событие
+            clientX = e.touches[0].clientX;
+            clientY = e.touches[0].clientY;
+        } else {
+            clientX = e.clientX;
+            clientY = e.clientY;
+        }
+
+        let canvasX = (clientX - rect.left) * scaleX;
+        let canvasY = (clientY - rect.top) * scaleY;
+
+        // ограничиваем границами canvas
+        canvasX = Math.min(Math.max(0, canvasX), canvas.width);
+        canvasY = Math.min(Math.max(0, canvasY), canvas.height);
+        return { x: canvasX, y: canvasY };
+    }
+
+    // Обработчики рисования
+    function startDrawing(e) {
+        drawing = true;
+        const coords = getCanvasCoords(e);
+        lastX = coords.x;
+        lastY = coords.y;
+        // Чтобы точки рисовались даже при одиночном клике (небольшой штрих)
+        ctx.beginPath();
+        ctx.moveTo(lastX, lastY);
+        ctx.lineTo(lastX, lastY);
+        ctx.strokeStyle = currentColor;
+        ctx.lineWidth = currentSize;
+        ctx.stroke();
+        // Отправляем событие точки (линия нулевой длины, но другие клиенты её увидят)
+        const pointEvent = {
+            x0: lastX, y0: lastY,
+            x1: lastX, y1: lastY,
+            color: currentColor,
+            size: currentSize
+        };
+        drawOnCanvas(pointEvent, true);
+    }
+
+    function draw(e) {
+        if (!drawing) return;
+        e.preventDefault();
+        const coords = getCanvasCoords(e);
+        const currentX = coords.x;
+        const currentY = coords.y;
+
+        const lineEvent = {
+            x0: lastX, y0: lastY,
+            x1: currentX, y1: currentY,
+            color: currentColor,
+            size: currentSize
+        };
+        drawOnCanvas(lineEvent, true);
+
+        lastX = currentX;
+        lastY = currentY;
+    }
+
+    function stopDrawing() {
+        drawing = false;
+    }
+
+    // Очистка доски (локально и через сервер)
+    function clearBoard() {
+        globalHistory = [];
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        socket.emit('clear');
+    }
+
+    // Загрузка истории от сервера при подключении
+    socket.on('loadHistory', (history) => {
+        globalHistory = history;
+        resizeCanvas(); // вызовет redrawFromHistory
+    });
+
+    // Получение нового события рисования от другого пользователя
+    socket.on('draw', (data) => {
+        globalHistory.push(data);
+        drawOnCanvas(data, false);
+    });
+
+    // Очистка доски по команде от сервера
+    socket.on('clear', () => {
+        globalHistory = [];
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+    });
+
+    // Подписка на события мыши и касания
+    canvas.addEventListener('mousedown', startDrawing);
+    canvas.addEventListener('mousemove', draw);
+    canvas.addEventListener('mouseup', stopDrawing);
+    canvas.addEventListener('mouseleave', stopDrawing);
+
+    canvas.addEventListener('touchstart', startDrawing);
+    canvas.addEventListener('touchmove', draw);
+    canvas.addEventListener('touchend', stopDrawing);
+    canvas.addEventListener('touchcancel', stopDrawing);
+
+    // Изменение цвета
+    document.querySelectorAll('.color-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            document.querySelectorAll('.color-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            currentColor = btn.getAttribute('data-color');
+        });
+    });
+
+    // Изменение толщины кисти
+    const sizeSlider = document.getElementById('brushSize');
+    const sizeValue = document.getElementById('sizeValue');
+    sizeSlider.addEventListener('input', (e) => {
+        currentSize = parseInt(e.target.value);
+        sizeValue.textContent = currentSize;
+    });
+
+    // Кнопка очистки
+    document.getElementById('clearBtn').addEventListener('click', clearBoard);
+
+    // Адаптация при изменении размера окна
+    window.addEventListener('resize', () => {
+        resizeCanvas();
+    });
+
+    // Инициализация
+    resizeCanvas();
+</script>
+</body>
+</html>
