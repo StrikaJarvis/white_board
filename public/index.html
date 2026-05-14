@@ -99,6 +99,15 @@
             cursor: pointer;
             font-weight: bold;
         }
+        .undo-btn {
+            background: #f39c12;
+            color: white;
+            border: none;
+            padding: 6px 16px;
+            border-radius: 30px;
+            cursor: pointer;
+            font-weight: bold;
+        }
         canvas {
             display: block;
             width: 100%;
@@ -234,6 +243,7 @@
                 <input type="range" id="brushSize" min="1" max="80" value="5">
                 <span id="sizeValue">5</span>
             </div>
+            <button id="undoBtn" class="undo-btn">↩️ Отменить</button>
             <button id="clearBtn" class="clear-btn">🗑️ Очистить всё</button>
         </div>
         <canvas id="whiteboard" width="1600" height="900" style="width:100%; height:auto; aspect-ratio:1600/900"></canvas>
@@ -293,7 +303,7 @@
         let shapeStart = null;
         let savedImageData = null;
 
-        // Для рисования линий (интерполяция)
+        // Для рисования линий
         let lastX = 0, lastY = 0;
 
         // ---------- ЦВЕТА ----------
@@ -365,7 +375,7 @@
         triangleBtn.addEventListener('click', () => setActiveTool('triangle'));
         donutBtn.addEventListener('click', () => setActiveTool('donut'));
 
-        // ---------- ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ----------
+        // ---------- ФУНКЦИИ РИСОВАНИЯ ----------
         function drawLine(x0, y0, x1, y1, color, size, emit = true) {
             ctx.beginPath();
             ctx.moveTo(x0, y0);
@@ -518,11 +528,9 @@
             return {x, y};
         }
 
-        // Сохранение/восстановление для предпросмотра
         function saveCanvasState() { savedImageData = ctx.getImageData(0, 0, canvas.width, canvas.height); }
         function restoreCanvasState() { if (savedImageData) ctx.putImageData(savedImageData, 0, 0); else redrawFull(); }
 
-        // Полная перерисовка по истории
         function redrawFull() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             for (let ev of globalHistory) {
@@ -544,7 +552,7 @@
             }
         }
 
-        // ---------- ОБРАБОТЧИКИ СОБЫТИЙ ----------
+        // ---------- ОБРАБОТЧИКИ МЫШИ ----------
         function onMouseDown(e) {
             e.preventDefault();
             const coords = getCanvasCoords(e);
@@ -561,11 +569,9 @@
                 lastX = coords.x;
                 lastY = coords.y;
                 const color = (currentTool === 'eraser') ? '#ffffff' : currentColor;
-                // Рисуем точку (начало)
                 drawLine(lastX, lastY, lastX, lastY, color, currentSize, true);
                 return;
             }
-            // Фигуры
             shapeStart = coords;
             drawing = true;
             saveCanvasState();
@@ -666,6 +672,18 @@
             globalHistory = [];
             ctx.clearRect(0, 0, canvas.width, canvas.height);
         });
+
+        // ---------- ОТМЕНА ДЕЙСТВИЯ ----------
+        document.getElementById('undoBtn').addEventListener('click', () => {
+            socket.emit('undo');
+        });
+        window.addEventListener('keydown', (e) => {
+            if ((e.ctrlKey || e.metaKey) && e.key === 'z') {
+                e.preventDefault();
+                socket.emit('undo');
+            }
+        });
+
         document.getElementById('clearBtn').addEventListener('click', () => {
             globalHistory = [];
             ctx.clearRect(0,0,canvas.width,canvas.height);
@@ -692,7 +710,6 @@
         canvas.addEventListener('touchcancel', onMouseUp);
         resizeCanvas();
 
-        // Отправить серверу свой ник
         socket.emit('setUsername', myUsername);
     }
 </script>
