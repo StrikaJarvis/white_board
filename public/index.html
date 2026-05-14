@@ -39,8 +39,9 @@
             gap: 12px;
             align-items: center;
             border-bottom: 2px solid #bdc3c7;
-            max-height: 180px;
-            overflow-y: auto;
+            /* Убираем прокрутку */
+            max-height: none;
+            overflow-y: visible;
         }
         .tool-group {
             background: white;
@@ -210,7 +211,7 @@
         @media (max-width: 800px) {
             .app-container { flex-direction: column; height: auto; }
             .chat-container { min-height: 300px; }
-            .toolbar { max-height: none; }
+            .toolbar { flex-direction: column; align-items: stretch; }
         }
     </style>
     <script src="/socket.io/socket.io.js"></script>
@@ -224,13 +225,13 @@
                 <button id="eraserTool" class="tool-btn">🧽 Ластик</button>
                 <button id="fillTool" class="tool-btn">🪣 Заливка</button>
                 <button id="lineTool" class="tool-btn">📏 Линейка</button>
+                <button id="polylineTool" class="tool-btn">📈 Ломаная</button>
                 <button id="textTool" class="tool-btn">📝 Текст</button>
             </div>
             <div class="tool-group">
                 <button id="circleTool" class="tool-btn">⚪ Круг</button>
                 <button id="rectTool" class="tool-btn">⬛ Квадрат</button>
                 <button id="triangleTool" class="tool-btn">🔺 Треугольник</button>
-                <button id="donutTool" class="tool-btn">🍩 Пончик</button>
             </div>
             <div class="tool-group">
                 <div class="color-palette" id="colorPalette"></div>
@@ -303,8 +304,13 @@
         let shapeStart = null;
         let savedImageData = null;
 
-        // Для рисования линий
+        // Для рисования линий (кисть/ластик)
         let lastX = 0, lastY = 0;
+
+        // Для ломаной линии
+        let polylinePoints = [];
+        let polylineTempX = 0, polylineTempY = 0;
+        let polylineActive = false;
 
         // ---------- ЦВЕТА ----------
         const presetColors = ['#000000','#2c3e50','#7f8c8d','#bdc3c7','#ffffff','#e74c3c','#c0392b','#ff6b6b','#ffa502','#f1c40f','#f39c12','#2ecc71','#27ae60','#1abc9c','#3498db','#2980b9','#9b59b6','#8e44ad','#e84393'];
@@ -344,24 +350,26 @@
         const eraserBtn = document.getElementById('eraserTool');
         const fillBtn = document.getElementById('fillTool');
         const lineBtn = document.getElementById('lineTool');
+        const polylineBtn = document.getElementById('polylineTool');
         const textBtn = document.getElementById('textTool');
         const circleBtn = document.getElementById('circleTool');
         const rectBtn = document.getElementById('rectTool');
         const triangleBtn = document.getElementById('triangleTool');
-        const donutBtn = document.getElementById('donutTool');
 
         function setActiveTool(tool) {
+            // Завершаем активную ломаную при смене инструмента
+            if (polylineActive) finishPolyline();
             currentTool = tool;
-            [brushBtn, eraserBtn, fillBtn, lineBtn, textBtn, circleBtn, rectBtn, triangleBtn, donutBtn].forEach(btn => btn.classList.remove('active'));
+            [brushBtn, eraserBtn, fillBtn, lineBtn, polylineBtn, textBtn, circleBtn, rectBtn, triangleBtn].forEach(btn => btn.classList.remove('active'));
             if (tool === 'brush') brushBtn.classList.add('active');
             if (tool === 'eraser') eraserBtn.classList.add('active');
             if (tool === 'fill') fillBtn.classList.add('active');
             if (tool === 'line') lineBtn.classList.add('active');
+            if (tool === 'polyline') polylineBtn.classList.add('active');
             if (tool === 'text') textBtn.classList.add('active');
             if (tool === 'circle') circleBtn.classList.add('active');
             if (tool === 'rect') rectBtn.classList.add('active');
             if (tool === 'triangle') triangleBtn.classList.add('active');
-            if (tool === 'donut') donutBtn.classList.add('active');
             shapeStart = null;
             drawing = false;
         }
@@ -369,11 +377,11 @@
         eraserBtn.addEventListener('click', () => setActiveTool('eraser'));
         fillBtn.addEventListener('click', () => setActiveTool('fill'));
         lineBtn.addEventListener('click', () => setActiveTool('line'));
+        polylineBtn.addEventListener('click', () => setActiveTool('polyline'));
         textBtn.addEventListener('click', () => setActiveTool('text'));
         circleBtn.addEventListener('click', () => setActiveTool('circle'));
         rectBtn.addEventListener('click', () => setActiveTool('rect'));
         triangleBtn.addEventListener('click', () => setActiveTool('triangle'));
-        donutBtn.addEventListener('click', () => setActiveTool('donut'));
 
         // ---------- ФУНКЦИИ РИСОВАНИЯ ----------
         function drawLine(x0, y0, x1, y1, color, size, emit = true) {
@@ -410,21 +418,42 @@
                 ctx.beginPath(); ctx.moveTo(x0, y0); ctx.lineTo(x1, y1); ctx.lineTo(p3x, y1); ctx.closePath();
                 if (fill) { ctx.fillStyle = color; ctx.fill(); }
                 else { ctx.strokeStyle = color; ctx.lineWidth = size; ctx.stroke(); }
-            } else if (tool === 'donut') {
-                const outerR = Math.hypot(x1 - x0, y1 - y0);
-                const innerR = outerR / 2;
-                ctx.beginPath(); ctx.arc(x0, y0, outerR, 0, 2 * Math.PI);
-                ctx.fillStyle = color; ctx.fill();
-                ctx.beginPath(); ctx.arc(x0, y0, innerR, 0, 2 * Math.PI);
-                ctx.fillStyle = '#ffffff'; ctx.fill();
             }
         }
 
         function commitShape(tool, start, end, color, size) {
-            const data = { type: tool, x0: start.x, y0: start.y, x1: end.x, y1: end.y, color, size, fill: (tool === 'donut') };
+            const data = { type: tool, x0: start.x, y0: start.y, x1: end.x, y1: end.y, color, size };
             globalHistory.push(data);
             socket.emit('draw', data);
-            drawShape(ctx, tool, start, end, color, size, tool === 'donut');
+            drawShape(ctx, tool, start, end, color, size, false);
+        }
+
+        // Ломаная линия
+        function drawPolyline(points, color, size, emit = true) {
+            if (points.length < 2) return;
+            ctx.beginPath();
+            ctx.moveTo(points[0].x, points[0].y);
+            for (let i = 1; i < points.length; i++) {
+                ctx.lineTo(points[i].x, points[i].y);
+            }
+            ctx.strokeStyle = color;
+            ctx.lineWidth = size;
+            ctx.stroke();
+            if (emit) {
+                const data = { type: 'polyline', points: points, color, size };
+                globalHistory.push(data);
+                socket.emit('draw', data);
+            }
+        }
+
+        function finishPolyline() {
+            if (!polylineActive) return;
+            if (polylinePoints.length >= 2) {
+                drawPolyline(polylinePoints, currentColor, currentSize, true);
+            }
+            polylinePoints = [];
+            polylineActive = false;
+            redrawFull(); // очищаем временный предпросмотр
         }
 
         // Заливка
@@ -546,8 +575,15 @@
                     ctx.strokeStyle = ev.color;
                     ctx.lineWidth = ev.size;
                     ctx.stroke();
+                } else if (ev.type === 'polyline') {
+                    ctx.beginPath();
+                    ctx.moveTo(ev.points[0].x, ev.points[0].y);
+                    for (let i = 1; i < ev.points.length; i++) ctx.lineTo(ev.points[i].x, ev.points[i].y);
+                    ctx.strokeStyle = ev.color;
+                    ctx.lineWidth = ev.size;
+                    ctx.stroke();
                 } else if (ev.x0 !== undefined && ev.x1 !== undefined) {
-                    drawShape(ctx, ev.type, {x: ev.x0, y: ev.y0}, {x: ev.x1, y: ev.y1}, ev.color, ev.size, ev.type === 'donut');
+                    drawShape(ctx, ev.type, {x: ev.x0, y: ev.y0}, {x: ev.x1, y: ev.y1}, ev.color, ev.size, false);
                 }
             }
         }
@@ -564,6 +600,20 @@
                 showTextInput(e.clientX, e.clientY);
                 return;
             }
+            if (currentTool === 'polyline') {
+                if (!polylineActive) {
+                    polylineActive = true;
+                    polylinePoints = [coords];
+                    saveCanvasState();
+                } else {
+                    // Добавляем точку
+                    polylinePoints.push(coords);
+                    // Предпросмотр: рисуем временную линию до курсора (будет в mousemove)
+                    restoreCanvasState();
+                    drawPolyline(polylinePoints, currentColor, currentSize, false);
+                }
+                return;
+            }
             if (currentTool === 'brush' || currentTool === 'eraser') {
                 drawing = true;
                 lastX = coords.x;
@@ -572,36 +622,56 @@
                 drawLine(lastX, lastY, lastX, lastY, color, currentSize, true);
                 return;
             }
+            // Фигуры (line, rect, circle, triangle)
             shapeStart = coords;
             drawing = true;
             saveCanvasState();
         }
 
         function onMouseMove(e) {
-            if (!drawing) return;
+            if (!drawing && !polylineActive) return;
             e.preventDefault();
             const coords = getCanvasCoords(e);
+            if (currentTool === 'polyline' && polylineActive) {
+                restoreCanvasState();
+                // Рисуем все накопленные точки и временную линию к курсору
+                drawPolyline(polylinePoints, currentColor, currentSize, false);
+                if (polylinePoints.length > 0) {
+                    ctx.beginPath();
+                    ctx.moveTo(polylinePoints[polylinePoints.length-1].x, polylinePoints[polylinePoints.length-1].y);
+                    ctx.lineTo(coords.x, coords.y);
+                    ctx.strokeStyle = currentColor;
+                    ctx.lineWidth = currentSize;
+                    ctx.stroke();
+                }
+                return;
+            }
             if (currentTool === 'brush' || currentTool === 'eraser') {
+                if (!drawing) return;
                 const color = (currentTool === 'eraser') ? '#ffffff' : currentColor;
                 drawLine(lastX, lastY, coords.x, coords.y, color, currentSize, true);
                 lastX = coords.x;
                 lastY = coords.y;
                 return;
             }
-            if (shapeStart && ['line','rect','circle','triangle','donut'].includes(currentTool)) {
+            if (shapeStart && ['line','rect','circle','triangle'].includes(currentTool)) {
                 restoreCanvasState();
-                drawShape(ctx, currentTool, shapeStart, coords, currentColor, currentSize, currentTool === 'donut');
+                drawShape(ctx, currentTool, shapeStart, coords, currentColor, currentSize, false);
             }
         }
 
         function onMouseUp(e) {
+            if (currentTool === 'polyline') {
+                // Ничего не завершаем, ждём двойного клика или Enter
+                return;
+            }
             if (!drawing) {
                 drawing = false;
                 shapeStart = null;
                 savedImageData = null;
                 return;
             }
-            if (shapeStart && ['line','rect','circle','triangle','donut'].includes(currentTool)) {
+            if (shapeStart && ['line','rect','circle','triangle'].includes(currentTool)) {
                 const endPoint = getCanvasCoords(e);
                 restoreCanvasState();
                 commitShape(currentTool, shapeStart, endPoint, currentColor, currentSize);
@@ -612,6 +682,21 @@
             shapeStart = null;
             savedImageData = null;
         }
+
+        // Двойной клик для завершения ломаной
+        canvas.addEventListener('dblclick', (e) => {
+            if (currentTool === 'polyline' && polylineActive) {
+                e.preventDefault();
+                finishPolyline();
+            }
+        });
+        // Глобальная клавиша Enter для завершения ломаной
+        window.addEventListener('keydown', (e) => {
+            if (currentTool === 'polyline' && polylineActive && e.key === 'Enter') {
+                e.preventDefault();
+                finishPolyline();
+            }
+        });
 
         // ---------- ЧАТ ----------
         const chatMessages = document.getElementById('chatMessages');
@@ -659,9 +744,17 @@
                 ctx.strokeStyle = data.color;
                 ctx.lineWidth = data.size;
                 ctx.stroke();
+            } else if (data.type === 'polyline') {
+                globalHistory.push(data);
+                ctx.beginPath();
+                ctx.moveTo(data.points[0].x, data.points[0].y);
+                for (let i = 1; i < data.points.length; i++) ctx.lineTo(data.points[i].x, data.points[i].y);
+                ctx.strokeStyle = data.color;
+                ctx.lineWidth = data.size;
+                ctx.stroke();
             } else if (data.x0 !== undefined && data.x1 !== undefined) {
                 globalHistory.push(data);
-                drawShape(ctx, data.type, {x:data.x0,y:data.y0}, {x:data.x1,y:data.y1}, data.color, data.size, data.type === 'donut');
+                drawShape(ctx, data.type, {x:data.x0,y:data.y0}, {x:data.x1,y:data.y1}, data.color, data.size, false);
             }
         });
         socket.on('fill', (data) => {
@@ -673,7 +766,7 @@
             ctx.clearRect(0, 0, canvas.width, canvas.height);
         });
 
-        // ---------- ОТМЕНА ДЕЙСТВИЯ ----------
+        // Отмена действия
         document.getElementById('undoBtn').addEventListener('click', () => {
             socket.emit('undo');
         });
@@ -690,7 +783,7 @@
             socket.emit('clear');
         });
 
-        // ---------- АДАПТАЦИЯ ХОЛСТА ----------
+        // Адаптация холста
         function resizeCanvas() {
             const container = canvas.parentElement;
             const width = Math.min(1600, container.clientWidth - 40);
