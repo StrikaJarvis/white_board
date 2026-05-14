@@ -39,7 +39,6 @@
             gap: 12px;
             align-items: center;
             border-bottom: 2px solid #bdc3c7;
-            /* Убираем прокрутку */
             max-height: none;
             overflow-y: visible;
         }
@@ -63,6 +62,13 @@
             transition: 0.2s;
         }
         .tool-btn.active { background: #3498db; color: white; }
+        .fill-toggle-btn {
+            background: #95a5a6;
+            color: white;
+        }
+        .fill-toggle-btn.active-fill {
+            background: #2ecc71;
+        }
         .color-palette {
             display: flex;
             flex-wrap: wrap;
@@ -232,6 +238,7 @@
                 <button id="circleTool" class="tool-btn">⚪ Круг</button>
                 <button id="rectTool" class="tool-btn">⬛ Квадрат</button>
                 <button id="triangleTool" class="tool-btn">🔺 Треугольник</button>
+                <button id="fillShapeToggle" class="tool-btn fill-toggle-btn">🎨 Заливка фигур</button>
             </div>
             <div class="tool-group">
                 <div class="color-palette" id="colorPalette"></div>
@@ -303,13 +310,13 @@
         let globalHistory = [];
         let shapeStart = null;
         let savedImageData = null;
+        let fillShapeMode = false; // режим заливки фигур
 
         // Для рисования линий (кисть/ластик)
         let lastX = 0, lastY = 0;
 
         // Для ломаной линии
         let polylinePoints = [];
-        let polylineTempX = 0, polylineTempY = 0;
         let polylineActive = false;
 
         // ---------- ЦВЕТА ----------
@@ -355,9 +362,9 @@
         const circleBtn = document.getElementById('circleTool');
         const rectBtn = document.getElementById('rectTool');
         const triangleBtn = document.getElementById('triangleTool');
+        const fillShapeToggle = document.getElementById('fillShapeToggle');
 
         function setActiveTool(tool) {
-            // Завершаем активную ломаную при смене инструмента
             if (polylineActive) finishPolyline();
             currentTool = tool;
             [brushBtn, eraserBtn, fillBtn, lineBtn, polylineBtn, textBtn, circleBtn, rectBtn, triangleBtn].forEach(btn => btn.classList.remove('active'));
@@ -373,6 +380,20 @@
             shapeStart = null;
             drawing = false;
         }
+
+        // Переключение режима заливки фигур
+        function toggleFillShape() {
+            fillShapeMode = !fillShapeMode;
+            if (fillShapeMode) {
+                fillShapeToggle.classList.add('active-fill');
+                fillShapeToggle.textContent = '🎨 Заливка (вкл)';
+            } else {
+                fillShapeToggle.classList.remove('active-fill');
+                fillShapeToggle.textContent = '🎨 Заливка фигур';
+            }
+        }
+        fillShapeToggle.addEventListener('click', toggleFillShape);
+
         brushBtn.addEventListener('click', () => setActiveTool('brush'));
         eraserBtn.addEventListener('click', () => setActiveTool('eraser'));
         fillBtn.addEventListener('click', () => setActiveTool('fill'));
@@ -406,26 +427,50 @@
             if (tool === 'line') {
                 drawLine(x0, y0, x1, y1, color, size, false);
             } else if (tool === 'rect') {
-                if (fill) { ctx.fillStyle = color; ctx.fillRect(x0, y0, w, h); }
-                else { ctx.strokeStyle = color; ctx.lineWidth = size; ctx.strokeRect(x0, y0, w, h); }
+                if (fill) {
+                    ctx.fillStyle = color;
+                    ctx.fillRect(x0, y0, w, h);
+                } else {
+                    ctx.strokeStyle = color;
+                    ctx.lineWidth = size;
+                    ctx.strokeRect(x0, y0, w, h);
+                }
             } else if (tool === 'circle') {
                 const radius = Math.hypot(x1 - x0, y1 - y0);
-                ctx.beginPath(); ctx.arc(x0, y0, radius, 0, 2 * Math.PI);
-                if (fill) { ctx.fillStyle = color; ctx.fill(); }
-                else { ctx.strokeStyle = color; ctx.lineWidth = size; ctx.stroke(); }
+                ctx.beginPath();
+                ctx.arc(x0, y0, radius, 0, 2 * Math.PI);
+                if (fill) {
+                    ctx.fillStyle = color;
+                    ctx.fill();
+                } else {
+                    ctx.strokeStyle = color;
+                    ctx.lineWidth = size;
+                    ctx.stroke();
+                }
             } else if (tool === 'triangle') {
                 const p3x = x0 - (x1 - x0);
-                ctx.beginPath(); ctx.moveTo(x0, y0); ctx.lineTo(x1, y1); ctx.lineTo(p3x, y1); ctx.closePath();
-                if (fill) { ctx.fillStyle = color; ctx.fill(); }
-                else { ctx.strokeStyle = color; ctx.lineWidth = size; ctx.stroke(); }
+                ctx.beginPath();
+                ctx.moveTo(x0, y0);
+                ctx.lineTo(x1, y1);
+                ctx.lineTo(p3x, y1);
+                ctx.closePath();
+                if (fill) {
+                    ctx.fillStyle = color;
+                    ctx.fill();
+                } else {
+                    ctx.strokeStyle = color;
+                    ctx.lineWidth = size;
+                    ctx.stroke();
+                }
             }
         }
 
         function commitShape(tool, start, end, color, size) {
-            const data = { type: tool, x0: start.x, y0: start.y, x1: end.x, y1: end.y, color, size };
+            const fill = (tool !== 'line') ? fillShapeMode : false;
+            const data = { type: tool, x0: start.x, y0: start.y, x1: end.x, y1: end.y, color, size, fill };
             globalHistory.push(data);
             socket.emit('draw', data);
-            drawShape(ctx, tool, start, end, color, size, false);
+            drawShape(ctx, tool, start, end, color, size, fill);
         }
 
         // Ломаная линия
@@ -453,10 +498,10 @@
             }
             polylinePoints = [];
             polylineActive = false;
-            redrawFull(); // очищаем временный предпросмотр
+            redrawFull();
         }
 
-        // Заливка
+        // Заливка (flood fill)
         function floodFill(startX, startY, fillColor) {
             const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
             const data = imageData.data;
@@ -497,7 +542,7 @@
             socket.emit('fill', fillEvent);
         }
 
-        // Текст без рамки
+        // Текст
         let textInputActive = false;
         function showTextInput(clientX, clientY) {
             if (textInputActive) return;
@@ -583,7 +628,8 @@
                     ctx.lineWidth = ev.size;
                     ctx.stroke();
                 } else if (ev.x0 !== undefined && ev.x1 !== undefined) {
-                    drawShape(ctx, ev.type, {x: ev.x0, y: ev.y0}, {x: ev.x1, y: ev.y1}, ev.color, ev.size, false);
+                    const fill = ev.fill || false;
+                    drawShape(ctx, ev.type, {x: ev.x0, y: ev.y0}, {x: ev.x1, y: ev.y1}, ev.color, ev.size, fill);
                 }
             }
         }
@@ -606,9 +652,7 @@
                     polylinePoints = [coords];
                     saveCanvasState();
                 } else {
-                    // Добавляем точку
                     polylinePoints.push(coords);
-                    // Предпросмотр: рисуем временную линию до курсора (будет в mousemove)
                     restoreCanvasState();
                     drawPolyline(polylinePoints, currentColor, currentSize, false);
                 }
@@ -634,7 +678,6 @@
             const coords = getCanvasCoords(e);
             if (currentTool === 'polyline' && polylineActive) {
                 restoreCanvasState();
-                // Рисуем все накопленные точки и временную линию к курсору
                 drawPolyline(polylinePoints, currentColor, currentSize, false);
                 if (polylinePoints.length > 0) {
                     ctx.beginPath();
@@ -656,13 +699,13 @@
             }
             if (shapeStart && ['line','rect','circle','triangle'].includes(currentTool)) {
                 restoreCanvasState();
-                drawShape(ctx, currentTool, shapeStart, coords, currentColor, currentSize, false);
+                const fill = (currentTool !== 'line') ? fillShapeMode : false;
+                drawShape(ctx, currentTool, shapeStart, coords, currentColor, currentSize, fill);
             }
         }
 
         function onMouseUp(e) {
             if (currentTool === 'polyline') {
-                // Ничего не завершаем, ждём двойного клика или Enter
                 return;
             }
             if (!drawing) {
@@ -683,14 +726,12 @@
             savedImageData = null;
         }
 
-        // Двойной клик для завершения ломаной
         canvas.addEventListener('dblclick', (e) => {
             if (currentTool === 'polyline' && polylineActive) {
                 e.preventDefault();
                 finishPolyline();
             }
         });
-        // Глобальная клавиша Enter для завершения ломаной
         window.addEventListener('keydown', (e) => {
             if (currentTool === 'polyline' && polylineActive && e.key === 'Enter') {
                 e.preventDefault();
@@ -754,7 +795,8 @@
                 ctx.stroke();
             } else if (data.x0 !== undefined && data.x1 !== undefined) {
                 globalHistory.push(data);
-                drawShape(ctx, data.type, {x:data.x0,y:data.y0}, {x:data.x1,y:data.y1}, data.color, data.size, false);
+                const fill = data.fill || false;
+                drawShape(ctx, data.type, {x:data.x0,y:data.y0}, {x:data.x1,y:data.y1}, data.color, data.size, fill);
             }
         });
         socket.on('fill', (data) => {
