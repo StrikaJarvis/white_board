@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Онлайн доска для рисования — с заливкой и ластиком</title>
+    <title>Общедоступная доска для рисования и общения</title>
     <style>
         * {
             margin: 0;
@@ -13,7 +13,7 @@
         }
 
         body {
-            background: #2c3e50;
+            background: #1e2a36;
             display: flex;
             justify-content: center;
             align-items: center;
@@ -22,38 +22,40 @@
             padding: 20px;
         }
 
-        .container {
+        .app-container {
+            display: flex;
+            gap: 16px;
+            width: 100%;
+            max-width: 1600px;
+            height: 90vh;
+        }
+
+        /* Основная доска */
+        .board-container {
+            flex: 4;
             background: white;
             border-radius: 20px;
             box-shadow: 0 20px 35px rgba(0,0,0,0.2);
-            overflow: hidden;
             display: flex;
             flex-direction: column;
-            width: 100%;
-            max-width: 1300px;
+            overflow: hidden;
         }
 
         .toolbar {
             background: #ecf0f1;
-            padding: 12px 20px;
+            padding: 10px 15px;
             display: flex;
             flex-wrap: wrap;
-            gap: 15px;
+            gap: 12px;
             align-items: center;
-            justify-content: space-between;
             border-bottom: 2px solid #bdc3c7;
-        }
-
-        .tools {
-            display: flex;
-            gap: 15px;
-            flex-wrap: wrap;
-            align-items: center;
+            max-height: 180px;
+            overflow-y: auto;
         }
 
         .tool-group {
             background: white;
-            border-radius: 40px;
+            border-radius: 30px;
             padding: 5px 12px;
             display: flex;
             gap: 8px;
@@ -64,11 +66,11 @@
         .tool-btn {
             background: #ecf0f1;
             border: none;
-            padding: 8px 16px;
+            padding: 6px 14px;
             border-radius: 30px;
             cursor: pointer;
             font-weight: bold;
-            font-size: 14px;
+            font-size: 13px;
             transition: 0.2s;
         }
 
@@ -80,23 +82,21 @@
         .color-palette {
             display: flex;
             flex-wrap: wrap;
-            gap: 8px;
-            max-width: 280px;
+            gap: 6px;
+            max-width: 260px;
         }
 
         .color-btn {
-            width: 30px;
-            height: 30px;
+            width: 28px;
+            height: 28px;
             border-radius: 50%;
             cursor: pointer;
             border: 2px solid transparent;
-            transition: 0.1s;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
         }
 
         .color-btn.active {
             border-color: #2c3e50;
-            transform: scale(1.15);
+            transform: scale(1.1);
         }
 
         .custom-color {
@@ -104,44 +104,36 @@
             align-items: center;
             gap: 5px;
         }
+
         #customColorPicker {
-            width: 40px;
-            height: 40px;
-            border: 2px solid #bdc3c7;
+            width: 36px;
+            height: 36px;
             border-radius: 50%;
             cursor: pointer;
-            background: #000;
+            border: 2px solid #bdc3c7;
         }
 
         .size-control {
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 8px;
             background: white;
-            padding: 5px 12px;
-            border-radius: 40px;
+            padding: 4px 12px;
+            border-radius: 30px;
         }
 
         #brushSize {
-            width: 120px;
+            width: 100px;
         }
 
-        button.clear-btn {
+        .clear-btn {
             background: #e74c3c;
-            border: none;
             color: white;
-            padding: 8px 20px;
+            border: none;
+            padding: 6px 16px;
             border-radius: 30px;
             cursor: pointer;
             font-weight: bold;
-        }
-
-        .info {
-            background: #f39c12;
-            padding: 6px 12px;
-            border-radius: 30px;
-            color: white;
-            font-size: 14px;
         }
 
         canvas {
@@ -150,23 +142,113 @@
             background: white;
             cursor: crosshair;
             touch-action: none;
+            flex: 1;
         }
 
-        @media (max-width: 700px) {
-            .toolbar { flex-direction: column; align-items: stretch; }
-            .color-palette { max-width: 100%; justify-content: center; }
+        /* Чат */
+        .chat-container {
+            flex: 1;
+            background: #f8f9fa;
+            border-radius: 20px;
+            box-shadow: 0 20px 35px rgba(0,0,0,0.2);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            min-width: 260px;
+        }
+
+        .chat-header {
+            background: #2c3e50;
+            color: white;
+            padding: 12px;
+            text-align: center;
+            font-weight: bold;
+        }
+
+        .chat-messages {
+            flex: 1;
+            padding: 12px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .message {
+            background: white;
+            border-radius: 18px;
+            padding: 6px 12px;
+            max-width: 90%;
+            word-wrap: break-word;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+        }
+
+        .message .author {
+            font-weight: bold;
+            color: #3498db;
+            font-size: 12px;
+        }
+
+        .message .text {
+            font-size: 14px;
+        }
+
+        .message.system {
+            background: #e9ecef;
+            font-style: italic;
+            text-align: center;
+            font-size: 12px;
+        }
+
+        .chat-input-area {
+            display: flex;
+            padding: 10px;
+            background: white;
+            border-top: 1px solid #dee2e6;
+        }
+
+        #chatInput {
+            flex: 1;
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 20px;
+            outline: none;
+        }
+
+        #sendChat {
+            background: #3498db;
+            color: white;
+            border: none;
+            border-radius: 20px;
+            padding: 8px 16px;
+            margin-left: 8px;
+            cursor: pointer;
+        }
+
+        @media (max-width: 800px) {
+            .app-container { flex-direction: column; height: auto; }
+            .chat-container { min-height: 300px; }
+            .toolbar { max-height: none; }
         }
     </style>
     <script src="/socket.io/socket.io.js"></script>
 </head>
 <body>
-<div class="container">
-    <div class="toolbar">
-        <div class="tools">
+<div class="app-container">
+    <div class="board-container">
+        <div class="toolbar">
             <div class="tool-group">
                 <button id="brushTool" class="tool-btn active">🖌️ Кисть</button>
                 <button id="eraserTool" class="tool-btn">🧽 Ластик</button>
                 <button id="fillTool" class="tool-btn">🪣 Заливка</button>
+                <button id="lineTool" class="tool-btn">📏 Линейка</button>
+                <button id="textTool" class="tool-btn">📝 Текст</button>
+            </div>
+            <div class="tool-group">
+                <button id="circleTool" class="tool-btn">⚪ Круг</button>
+                <button id="rectTool" class="tool-btn">⬛ Квадрат</button>
+                <button id="triangleTool" class="tool-btn">🔺 Треугольник</button>
+                <button id="donutTool" class="tool-btn">🍩 Пончик</button>
             </div>
             <div class="tool-group">
                 <div class="color-palette" id="colorPalette"></div>
@@ -176,32 +258,45 @@
             </div>
             <div class="size-control">
                 <label>✏️ Размер:</label>
-                <input type="range" id="brushSize" min="2" max="80" value="5">
+                <input type="range" id="brushSize" min="1" max="80" value="5">
                 <span id="sizeValue">5</span>
             </div>
             <button id="clearBtn" class="clear-btn">🗑️ Очистить всё</button>
         </div>
-        <div class="info">
-            👥 Совместное рисование | Ластик | Заливка
+        <canvas id="whiteboard" width="1600" height="900" style="width:100%; height:auto; aspect-ratio:1600/900"></canvas>
+    </div>
+    <div class="chat-container">
+        <div class="chat-header">💬 Общедоступная доска для рисования и общения</div>
+        <div class="chat-messages" id="chatMessages"></div>
+        <div class="chat-input-area">
+            <input type="text" id="chatInput" placeholder="Напишите сообщение..." maxlength="200">
+            <button id="sendChat">➤</button>
         </div>
     </div>
-    <canvas id="whiteboard" width="1200" height="700" style="width:100%; height:auto; aspect-ratio:1200/700"></canvas>
 </div>
 
 <script>
+    // ------------------- ИНИЦИАЛИЗАЦИЯ -------------------
     const canvas = document.getElementById('whiteboard');
     const ctx = canvas.getContext('2d');
     const socket = io();
 
-    // Состояние
+    // Состояние рисования
     let drawing = false;
-    let currentTool = 'brush';   // 'brush', 'eraser', 'fill'
+    let currentTool = 'brush';   // brush, eraser, fill, line, text, circle, rect, triangle, donut
     let currentColor = '#000000';
     let currentSize = 5;
     let lastX = 0, lastY = 0;
     let globalHistory = [];
 
-    // Предопределённые цвета (больше оттенков)
+    // Для фигур: запоминаем начальную точку
+    let shapeStart = null;
+
+    // Для текста
+    let textInputActive = false;
+    let textPos = null;
+
+    // Цвета
     const presetColors = [
         '#000000', '#2c3e50', '#7f8c8d', '#bdc3c7', '#ffffff',
         '#e74c3c', '#c0392b', '#ff6b6b', '#ffa502',
@@ -209,7 +304,7 @@
         '#3498db', '#2980b9', '#9b59b6', '#8e44ad', '#e84393'
     ];
 
-    // Создание палитры цветов
+    // Создание палитры
     const paletteDiv = document.getElementById('colorPalette');
     presetColors.forEach(color => {
         const btn = document.createElement('div');
@@ -217,7 +312,7 @@
         btn.style.backgroundColor = color;
         btn.setAttribute('data-color', color);
         btn.addEventListener('click', () => {
-            if (currentTool === 'eraser') setActiveTool('brush'); // переключаем на кисть, если был ластик
+            if (currentTool === 'eraser') setActiveTool('brush');
             currentColor = color;
             document.getElementById('customColorPicker').value = color;
             document.querySelectorAll('.color-btn').forEach(b => b.classList.remove('active'));
@@ -227,7 +322,6 @@
         paletteDiv.appendChild(btn);
     });
 
-    // Пользовательский цвет
     const customPicker = document.getElementById('customColorPicker');
     customPicker.addEventListener('input', (e) => {
         if (currentTool === 'eraser') setActiveTool('brush');
@@ -235,30 +329,7 @@
         document.querySelectorAll('.color-btn').forEach(b => b.classList.remove('active'));
     });
 
-    // Переключение инструментов
-    const brushBtn = document.getElementById('brushTool');
-    const eraserBtn = document.getElementById('eraserTool');
-    const fillBtn = document.getElementById('fillTool');
-
-    function setActiveTool(tool) {
-        currentTool = tool;
-        brushBtn.classList.remove('active');
-        eraserBtn.classList.remove('active');
-        fillBtn.classList.remove('active');
-        if (tool === 'brush') brushBtn.classList.add('active');
-        if (tool === 'eraser') eraserBtn.classList.add('active');
-        if (tool === 'fill') fillBtn.classList.add('active');
-        // Обновляем цвет для ластика (визуально)
-        if (tool === 'eraser') {
-            // ластик рисует белым, но не меняем currentColor, чтобы запомнить цвет для возврата
-        }
-    }
-
-    brushBtn.addEventListener('click', () => setActiveTool('brush'));
-    eraserBtn.addEventListener('click', () => setActiveTool('eraser'));
-    fillBtn.addEventListener('click', () => setActiveTool('fill'));
-
-    // Размер кисти
+    // Размер
     const sizeSlider = document.getElementById('brushSize');
     const sizeValue = document.getElementById('sizeValue');
     sizeSlider.addEventListener('input', (e) => {
@@ -266,37 +337,148 @@
         sizeValue.textContent = currentSize;
     });
 
-    // Функция рисования линии (вызывается локально и для воспроизведения истории)
-    function drawOnCanvas(data, addToHistory = false) {
-        if (!data.x0 || !data.y0 || !data.x1 || !data.y1) return;
-        ctx.save();
-        ctx.beginPath();
-        ctx.moveTo(data.x0, data.y0);
-        ctx.lineTo(data.x1, data.y1);
-        ctx.strokeStyle = data.color;
-        ctx.lineWidth = data.size;
-        ctx.lineCap = 'round';
-        ctx.lineJoin = 'round';
-        ctx.stroke();
-        ctx.restore();
+    // Инструменты
+    const brushBtn = document.getElementById('brushTool');
+    const eraserBtn = document.getElementById('eraserTool');
+    const fillBtn = document.getElementById('fillTool');
+    const lineBtn = document.getElementById('lineTool');
+    const textBtn = document.getElementById('textTool');
+    const circleBtn = document.getElementById('circleTool');
+    const rectBtn = document.getElementById('rectTool');
+    const triangleBtn = document.getElementById('triangleTool');
+    const donutBtn = document.getElementById('donutTool');
 
-        if (addToHistory) {
+    function setActiveTool(tool) {
+        currentTool = tool;
+        [brushBtn, eraserBtn, fillBtn, lineBtn, textBtn, circleBtn, rectBtn, triangleBtn, donutBtn].forEach(btn => btn.classList.remove('active'));
+        if (tool === 'brush') brushBtn.classList.add('active');
+        if (tool === 'eraser') eraserBtn.classList.add('active');
+        if (tool === 'fill') fillBtn.classList.add('active');
+        if (tool === 'line') lineBtn.classList.add('active');
+        if (tool === 'text') textBtn.classList.add('active');
+        if (tool === 'circle') circleBtn.classList.add('active');
+        if (tool === 'rect') rectBtn.classList.add('active');
+        if (tool === 'triangle') triangleBtn.classList.add('active');
+        if (tool === 'donut') donutBtn.classList.add('active');
+        if (tool === 'eraser') drawing = false; // не рисуем случайно
+        shapeStart = null;
+    }
+
+    brushBtn.addEventListener('click', () => setActiveTool('brush'));
+    eraserBtn.addEventListener('click', () => setActiveTool('eraser'));
+    fillBtn.addEventListener('click', () => setActiveTool('fill'));
+    lineBtn.addEventListener('click', () => setActiveTool('line'));
+    textBtn.addEventListener('click', () => setActiveTool('text'));
+    circleBtn.addEventListener('click', () => setActiveTool('circle'));
+    rectBtn.addEventListener('click', () => setActiveTool('rect'));
+    triangleBtn.addEventListener('click', () => setActiveTool('triangle'));
+    donutBtn.addEventListener('click', () => setActiveTool('donut'));
+
+    // ------------------- ОСНОВНЫЕ ФУНКЦИИ РИСОВАНИЯ -------------------
+    function drawOnCanvas(data, addToHistory = false) {
+        if (data.type === 'line' && data.x0 !== undefined && data.x1 !== undefined) {
+            ctx.beginPath();
+            ctx.moveTo(data.x0, data.y0);
+            ctx.lineTo(data.x1, data.y1);
+            ctx.strokeStyle = data.color;
+            ctx.lineWidth = data.size;
+            ctx.stroke();
+        } 
+        else if (data.type === 'circle' && data.x && data.y && data.radius) {
+            ctx.beginPath();
+            ctx.arc(data.x, data.y, data.radius, 0, 2 * Math.PI);
+            if (data.fill) {
+                ctx.fillStyle = data.color;
+                ctx.fill();
+            } else {
+                ctx.strokeStyle = data.color;
+                ctx.lineWidth = data.size;
+                ctx.stroke();
+            }
+        }
+        else if (data.type === 'rect' && data.x && data.y && data.w && data.h) {
+            if (data.fill) {
+                ctx.fillStyle = data.color;
+                ctx.fillRect(data.x, data.y, data.w, data.h);
+            } else {
+                ctx.strokeStyle = data.color;
+                ctx.lineWidth = data.size;
+                ctx.strokeRect(data.x, data.y, data.w, data.h);
+            }
+        }
+        else if (data.type === 'triangle' && data.points) {
+            ctx.beginPath();
+            ctx.moveTo(data.points[0].x, data.points[0].y);
+            ctx.lineTo(data.points[1].x, data.points[1].y);
+            ctx.lineTo(data.points[2].x, data.points[2].y);
+            ctx.closePath();
+            if (data.fill) {
+                ctx.fillStyle = data.color;
+                ctx.fill();
+            } else {
+                ctx.strokeStyle = data.color;
+                ctx.lineWidth = data.size;
+                ctx.stroke();
+            }
+        }
+        else if (data.type === 'donut' && data.x && data.y && data.outerR && data.innerR) {
+            ctx.beginPath();
+            ctx.arc(data.x, data.y, data.outerR, 0, 2 * Math.PI);
+            if (data.fill) {
+                ctx.fillStyle = data.color;
+                ctx.fill();
+            } else {
+                ctx.strokeStyle = data.color;
+                ctx.lineWidth = data.size;
+                ctx.stroke();
+            }
+            ctx.beginPath();
+            ctx.arc(data.x, data.y, data.innerR, 0, 2 * Math.PI);
+            ctx.fillStyle = '#ffffff';
+            ctx.fill();
+        }
+        else if (data.type === 'text' && data.x && data.y && data.text) {
+            ctx.font = `${data.size * 2}px "Segoe UI"`;
+            ctx.fillStyle = data.color;
+            ctx.fillText(data.text, data.x, data.y);
+            // рамка
+            const metrics = ctx.measureText(data.text);
+            const width = metrics.width;
+            const height = data.size * 2;
+            ctx.strokeStyle = data.color;
+            ctx.lineWidth = 1;
+            ctx.strokeRect(data.x - 5, data.y - height + 5, width + 10, height + 5);
+        }
+        else if (data.type === 'fill' && data.x !== undefined && data.y !== undefined) {
+            floodFill(data.x, data.y, data.color);
+            return; // floodFill уже перерисовывает, но добавим историю отдельно
+        }
+        else if (data.type === 'stroke' && data.x0 !== undefined) {
+            // обычная линия (кисть/ластик)
+            ctx.beginPath();
+            ctx.moveTo(data.x0, data.y0);
+            ctx.lineTo(data.x1, data.y1);
+            ctx.strokeStyle = data.color;
+            ctx.lineWidth = data.size;
+            ctx.stroke();
+        }
+
+        if (addToHistory && data.type !== 'fill') {
             globalHistory.push(data);
             socket.emit('draw', data);
         }
     }
 
-    // Функция заливки (распространение)
+    // Исправленная заливка (асинхронная, без зависаний)
     function floodFill(startX, startY, fillColor) {
-        // получаем данные пикселей
         const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
         const data = imageData.data;
-        const targetColor = getPixelColor(data, startX, startY, canvas.width);
+        const targetColor = getPixelColor(data, Math.floor(startX), Math.floor(startY), canvas.width);
         const fillRGB = hexToRgb(fillColor);
         if (!targetColor || !fillRGB) return;
         if (colorsMatch(targetColor, fillRGB)) return;
 
-        const stack = [{x: startX, y: startY}];
+        const stack = [{x: Math.floor(startX), y: Math.floor(startY)}];
         const visited = new Set();
         const width = canvas.width;
         const height = canvas.height;
@@ -310,29 +492,18 @@
             const key = `${x},${y}`;
             if (visited.has(key)) continue;
             visited.add(key);
-            // закрашиваем
             data[idx] = fillRGB.r;
             data[idx+1] = fillRGB.g;
             data[idx+2] = fillRGB.b;
             data[idx+3] = 255;
-            // соседи
             if (x > 0) stack.push({x: x-1, y});
             if (x < width-1) stack.push({x: x+1, y});
             if (y > 0) stack.push({x, y: y-1});
             if (y < height-1) stack.push({x, y: y+1});
         }
         ctx.putImageData(imageData, 0, 0);
-        // Отправляем событие заливки другим
-        const fillEvent = {
-            type: 'fill',
-            x: startX, y: startY,
-            color: fillColor,
-            width: canvas.width,
-            height: canvas.height
-        };
-        // Не можем передать весь imageData, но можно отправить параметры заливки и пересчитать на других клиентах?
-        // Лучше передать начальную точку и цвет, и каждый клиент сам выполнит заливку (синхронно).
-        // Но чтобы история сохранялась, добавим специальное событие.
+        // Сохраняем событие заливки в историю
+        const fillEvent = { type: 'fill', x: startX, y: startY, color: fillColor };
         globalHistory.push(fillEvent);
         socket.emit('fill', fillEvent);
     }
@@ -349,14 +520,10 @@
 
     function hexToRgb(hex) {
         const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-        return result ? {
-            r: parseInt(result[1], 16),
-            g: parseInt(result[2], 16),
-            b: parseInt(result[3], 16)
-        } : null;
+        return result ? { r: parseInt(result[1], 16), g: parseInt(result[2], 16), b: parseInt(result[3], 16) } : null;
     }
 
-    // Рисование локальное
+    // Координаты мыши
     function getCanvasCoords(e) {
         const rect = canvas.getBoundingClientRect();
         const scaleX = canvas.width / rect.width;
@@ -376,107 +543,219 @@
         return {x: canvasX, y: canvasY};
     }
 
+    // Рисование линий/фигур
     function startDrawing(e) {
         if (currentTool === 'fill') {
-            const coords = getCanvasCoords(e);
-            floodFill(coords.x, coords.y, currentColor);
+            const {x, y} = getCanvasCoords(e);
+            floodFill(x, y, currentColor);
             return;
         }
+        if (currentTool === 'text') {
+            const {x, y} = getCanvasCoords(e);
+            showTextInput(x, y);
+            return;
+        }
+        if (['circle', 'rect', 'triangle', 'donut', 'line'].includes(currentTool)) {
+            shapeStart = getCanvasCoords(e);
+            drawing = true;
+            return;
+        }
+        // Кисть или ластик
         drawing = true;
-        const coords = getCanvasCoords(e);
-        lastX = coords.x;
-        lastY = coords.y;
-        // точка (начало)
-        const colorToUse = (currentTool === 'eraser') ? '#ffffff' : currentColor;
-        const lineEvent = {
-            x0: lastX, y0: lastY,
-            x1: lastX, y1: lastY,
-            color: colorToUse,
-            size: currentSize
-        };
-        drawOnCanvas(lineEvent, true);
+        const {x, y} = getCanvasCoords(e);
+        lastX = x;
+        lastY = y;
+        const color = (currentTool === 'eraser') ? '#ffffff' : currentColor;
+        const pointEvent = { type: 'stroke', x0: x, y0: y, x1: x, y1: y, color: color, size: currentSize };
+        drawOnCanvas(pointEvent, true);
     }
 
     function draw(e) {
-        if (!drawing || currentTool === 'fill') return;
+        if (!drawing) return;
         e.preventDefault();
-        const coords = getCanvasCoords(e);
-        const currentX = coords.x;
-        const currentY = coords.y;
-        const colorToUse = (currentTool === 'eraser') ? '#ffffff' : currentColor;
-        const lineEvent = {
-            x0: lastX, y0: lastY,
-            x1: currentX, y1: currentY,
-            color: colorToUse,
-            size: currentSize
-        };
+        const {x, y} = getCanvasCoords(e);
+        if (currentTool === 'line' && shapeStart) {
+            // предпросмотр? Не будем усложнять, просто фиксируем линию по отпусканию
+            return;
+        }
+        if (['circle', 'rect', 'triangle', 'donut'].includes(currentTool) && shapeStart) {
+            return; // фигура завершится на mouseup
+        }
+        // Кисть или ластик
+        const color = (currentTool === 'eraser') ? '#ffffff' : currentColor;
+        const lineEvent = { type: 'stroke', x0: lastX, y0: lastY, x1: x, y1: y, color: color, size: currentSize };
         drawOnCanvas(lineEvent, true);
-        lastX = currentX;
-        lastY = currentY;
+        lastX = x;
+        lastY = y;
     }
 
-    function stopDrawing() {
+    function stopDrawing(e) {
+        if (!drawing) {
+            drawing = false;
+            shapeStart = null;
+            return;
+        }
+        if (shapeStart && ['circle', 'rect', 'triangle', 'donut', 'line'].includes(currentTool)) {
+            const endPoint = getCanvasCoords(e);
+            const start = shapeStart;
+            if (currentTool === 'line') {
+                const lineData = { type: 'line', x0: start.x, y0: start.y, x1: endPoint.x, y1: endPoint.y, color: currentColor, size: currentSize };
+                drawOnCanvas(lineData, true);
+            }
+            else if (currentTool === 'circle') {
+                const radius = Math.hypot(endPoint.x - start.x, endPoint.y - start.y);
+                const circleData = { type: 'circle', x: start.x, y: start.y, radius: radius, color: currentColor, size: currentSize, fill: false };
+                drawOnCanvas(circleData, true);
+            }
+            else if (currentTool === 'rect') {
+                const w = endPoint.x - start.x;
+                const h = endPoint.y - start.y;
+                const rectData = { type: 'rect', x: start.x, y: start.y, w: w, h: h, color: currentColor, size: currentSize, fill: false };
+                drawOnCanvas(rectData, true);
+            }
+            else if (currentTool === 'triangle') {
+                const points = [
+                    { x: start.x, y: start.y },
+                    { x: endPoint.x, y: endPoint.y },
+                    { x: start.x - (endPoint.x - start.x), y: endPoint.y }
+                ];
+                const triData = { type: 'triangle', points: points, color: currentColor, size: currentSize, fill: false };
+                drawOnCanvas(triData, true);
+            }
+            else if (currentTool === 'donut') {
+                const outerR = Math.hypot(endPoint.x - start.x, endPoint.y - start.y);
+                const innerR = outerR / 2;
+                const donutData = { type: 'donut', x: start.x, y: start.y, outerR: outerR, innerR: innerR, color: currentColor, size: currentSize, fill: true };
+                drawOnCanvas(donutData, true);
+            }
+            shapeStart = null;
+        }
         drawing = false;
+        shapeStart = null;
     }
 
-    function clearBoard() {
-        globalHistory = [];
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        socket.emit('clear');
-    }
-
-    // Загрузка истории от сервера
-    socket.on('loadHistory', (history) => {
-        globalHistory = history;
-        redrawFull();
-    });
-
-    socket.on('draw', (data) => {
-        globalHistory.push(data);
-        drawOnCanvas(data, false);
-    });
-
-    socket.on('fill', (data) => {
-        globalHistory.push(data);
-        // Выполняем заливку на этом клиенте
-        // Сохраняем контекст, временно меняем цвет
-        const oldColor = currentColor;
-        currentColor = data.color;
-        floodFill(data.x, data.y, data.color);
-        currentColor = oldColor;
-        // Также нужно синхронизировать глобальную историю? уже добавили
-    });
-
-    socket.on('clear', () => {
-        globalHistory = [];
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-    });
-
-    function redrawFull() {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        globalHistory.forEach(event => {
-            if (event.type === 'fill') {
-                // восстанавливаем цвет, временно
-                const oldColor = currentColor;
-                currentColor = event.color;
-                floodFill(event.x, event.y, event.color);
-                currentColor = oldColor;
-            } else if (event.x0 !== undefined) {
-                drawOnCanvas(event, false);
+    // Текст
+    function showTextInput(x, y) {
+        if (textInputActive) return;
+        textPos = {x, y};
+        const inputDiv = document.createElement('div');
+        inputDiv.style.position = 'absolute';
+        inputDiv.style.left = `${x}px`;
+        inputDiv.style.top = `${y}px`;
+        inputDiv.style.zIndex = 1000;
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.placeholder = 'Введите текст...';
+        input.style.fontSize = `${currentSize * 2}px`;
+        input.style.border = '2px solid #3498db';
+        input.style.borderRadius = '8px';
+        input.style.padding = '4px';
+        input.style.background = 'white';
+        inputDiv.appendChild(input);
+        document.body.appendChild(inputDiv);
+        input.focus();
+        input.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                const text = input.value.trim();
+                if (text) {
+                    const textData = { type: 'text', x: textPos.x, y: textPos.y, text: text, color: currentColor, size: currentSize };
+                    drawOnCanvas(textData, true);
+                }
+                inputDiv.remove();
+                textInputActive = false;
             }
         });
+        input.addEventListener('blur', () => {
+            inputDiv.remove();
+            textInputActive = false;
+        });
+        textInputActive = true;
+    }
+
+    // Чат
+    const chatMessages = document.getElementById('chatMessages');
+    const chatInput = document.getElementById('chatInput');
+    const sendChatBtn = document.getElementById('sendChat');
+
+    function addMessage(username, message, isSystem = false) {
+        const msgDiv = document.createElement('div');
+        msgDiv.className = isSystem ? 'message system' : 'message';
+        if (!isSystem) {
+            msgDiv.innerHTML = `<span class="author">${username}:</span> <span class="text">${message}</span>`;
+        } else {
+            msgDiv.innerText = message;
+        }
+        chatMessages.appendChild(msgDiv);
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+
+    sendChatBtn.addEventListener('click', () => {
+        const msg = chatInput.value.trim();
+        if (msg) {
+            socket.emit('chatMessage', msg);
+            chatInput.value = '';
+        }
+    });
+    chatInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') sendChatBtn.click();
+    });
+
+    socket.on('chatMessage', (data) => {
+        addMessage(data.username, data.message);
+    });
+    socket.on('userJoined', (username) => {
+        addMessage('', `${username} присоединился к доске`, true);
+    });
+    socket.on('userLeft', (username) => {
+        addMessage('', `${username} покинул доску`, true);
+    });
+
+    // Глобальная перерисовка
+    function redrawFull() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        for (let event of globalHistory) {
+            if (event.type === 'fill') {
+                floodFill(event.x, event.y, event.color);
+            } else {
+                drawOnCanvas(event, false);
+            }
+        }
     }
 
     function resizeCanvas() {
         const container = canvas.parentElement;
-        const width = Math.min(1200, container.clientWidth - 40);
-        const height = width * (700/1200);
+        const width = Math.min(1600, container.clientWidth - 40);
+        const height = width * (900/1600);
         canvas.width = width;
         canvas.height = height;
         redrawFull();
     }
 
-    window.addEventListener('resize', resizeCanvas);
+    // Сокеты
+    socket.on('loadHistory', (history) => {
+        globalHistory = history;
+        resizeCanvas();
+    });
+    socket.on('draw', (data) => {
+        globalHistory.push(data);
+        drawOnCanvas(data, false);
+    });
+    socket.on('fill', (data) => {
+        globalHistory.push(data);
+        floodFill(data.x, data.y, data.color);
+    });
+    socket.on('clear', () => {
+        globalHistory = [];
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+    });
+
+    document.getElementById('clearBtn').addEventListener('click', () => {
+        globalHistory = [];
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        socket.emit('clear');
+    });
+
+    // События мыши/касаний
     canvas.addEventListener('mousedown', startDrawing);
     canvas.addEventListener('mousemove', draw);
     canvas.addEventListener('mouseup', stopDrawing);
@@ -486,7 +765,7 @@
     canvas.addEventListener('touchend', stopDrawing);
     canvas.addEventListener('touchcancel', stopDrawing);
 
-    document.getElementById('clearBtn').addEventListener('click', clearBoard);
+    window.addEventListener('resize', resizeCanvas);
     resizeCanvas();
 </script>
 </body>
