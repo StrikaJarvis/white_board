@@ -165,7 +165,6 @@
             margin-left: 8px;
             cursor: pointer;
         }
-        /* Модальное окно для ввода ника */
         .modal {
             position: fixed;
             top: 0; left: 0;
@@ -253,7 +252,6 @@
     // ---------- МОДАЛЬНОЕ ОКНО ДЛЯ НИКА ----------
     let myUsername = localStorage.getItem('whiteboard_username');
     if (!myUsername) {
-        // показываем модальное окно
         const modalDiv = document.createElement('div');
         modalDiv.className = 'modal';
         modalDiv.innerHTML = `
@@ -282,7 +280,6 @@
     }
 
     function initApp() {
-        // ---------- ИНИЦИАЛИЗАЦИЯ ----------
         const canvas = document.getElementById('whiteboard');
         const ctx = canvas.getContext('2d');
         const socket = io();
@@ -292,11 +289,12 @@
         let currentTool = 'brush';
         let currentColor = '#000000';
         let currentSize = 5;
-        let lastX = 0, lastY = 0;
         let globalHistory = [];
         let shapeStart = null;
         let savedImageData = null;
-        let pendingDraw = false; // для requestAnimationFrame
+
+        // Для рисования линий (интерполяция)
+        let lastX = 0, lastY = 0;
 
         // ---------- ЦВЕТА ----------
         const presetColors = ['#000000','#2c3e50','#7f8c8d','#bdc3c7','#ffffff','#e74c3c','#c0392b','#ff6b6b','#ffa502','#f1c40f','#f39c12','#2ecc71','#27ae60','#1abc9c','#3498db','#2980b9','#9b59b6','#8e44ad','#e84393'];
@@ -355,7 +353,6 @@
             if (tool === 'triangle') triangleBtn.classList.add('active');
             if (tool === 'donut') donutBtn.classList.add('active');
             shapeStart = null;
-            savedImageData = null;
             drawing = false;
         }
         brushBtn.addEventListener('click', () => setActiveTool('brush'));
@@ -368,17 +365,28 @@
         triangleBtn.addEventListener('click', () => setActiveTool('triangle'));
         donutBtn.addEventListener('click', () => setActiveTool('donut'));
 
-        // Функции рисования фигур
+        // ---------- ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ----------
+        function drawLine(x0, y0, x1, y1, color, size, emit = true) {
+            ctx.beginPath();
+            ctx.moveTo(x0, y0);
+            ctx.lineTo(x1, y1);
+            ctx.strokeStyle = color;
+            ctx.lineWidth = size;
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+            ctx.stroke();
+            if (emit) {
+                const data = { type: 'stroke', x0, y0, x1, y1, color, size };
+                globalHistory.push(data);
+                socket.emit('draw', data);
+            }
+        }
+
         function drawShape(ctx, tool, start, end, color, size, fill = false) {
             const x0 = start.x, y0 = start.y, x1 = end.x, y1 = end.y;
             const w = x1 - x0, h = y1 - y0;
             if (tool === 'line') {
-                ctx.beginPath();
-                ctx.moveTo(x0, y0);
-                ctx.lineTo(x1, y1);
-                ctx.strokeStyle = color;
-                ctx.lineWidth = size;
-                ctx.stroke();
+                drawLine(x0, y0, x1, y1, color, size, false);
             } else if (tool === 'rect') {
                 if (fill) { ctx.fillStyle = color; ctx.fillRect(x0, y0, w, h); }
                 else { ctx.strokeStyle = color; ctx.lineWidth = size; ctx.strokeRect(x0, y0, w, h); }
@@ -514,7 +522,7 @@
         function saveCanvasState() { savedImageData = ctx.getImageData(0, 0, canvas.width, canvas.height); }
         function restoreCanvasState() { if (savedImageData) ctx.putImageData(savedImageData, 0, 0); else redrawFull(); }
 
-        // Полная перерисовка
+        // Полная перерисовка по истории
         function redrawFull() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             for (let ev of globalHistory) {
@@ -536,22 +544,7 @@
             }
         }
 
-        // ---------- ОБРАБОТЧИКИ МЫШИ ДЛЯ КИСТИ/ЛАСТИКА (без пробелов) ----------
-        let lastDrawX = 0, lastDrawY = 0;
-        function drawLineSegment(x0, y0, x1, y1, color, size, emit = true) {
-            ctx.beginPath();
-            ctx.moveTo(x0, y0);
-            ctx.lineTo(x1, y1);
-            ctx.strokeStyle = color;
-            ctx.lineWidth = size;
-            ctx.stroke();
-            if (emit) {
-                const data = { type: 'stroke', x0, y0, x1, y1, color, size };
-                globalHistory.push(data);
-                socket.emit('draw', data);
-            }
-        }
-
+        // ---------- ОБРАБОТЧИКИ СОБЫТИЙ ----------
         function onMouseDown(e) {
             e.preventDefault();
             const coords = getCanvasCoords(e);
@@ -565,11 +558,11 @@
             }
             if (currentTool === 'brush' || currentTool === 'eraser') {
                 drawing = true;
-                lastDrawX = coords.x;
-                lastDrawY = coords.y;
+                lastX = coords.x;
+                lastY = coords.y;
                 const color = (currentTool === 'eraser') ? '#ffffff' : currentColor;
-                // рисуем точку (начало)
-                drawLineSegment(lastDrawX, lastDrawY, lastDrawX, lastDrawY, color, currentSize, true);
+                // Рисуем точку (начало)
+                drawLine(lastX, lastY, lastX, lastY, color, currentSize, true);
                 return;
             }
             // Фигуры
@@ -584,9 +577,9 @@
             const coords = getCanvasCoords(e);
             if (currentTool === 'brush' || currentTool === 'eraser') {
                 const color = (currentTool === 'eraser') ? '#ffffff' : currentColor;
-                drawLineSegment(lastDrawX, lastDrawY, coords.x, coords.y, color, currentSize, true);
-                lastDrawX = coords.x;
-                lastDrawY = coords.y;
+                drawLine(lastX, lastY, coords.x, coords.y, color, currentSize, true);
+                lastX = coords.x;
+                lastY = coords.y;
                 return;
             }
             if (shapeStart && ['line','rect','circle','triangle','donut'].includes(currentTool)) {
@@ -614,7 +607,7 @@
             savedImageData = null;
         }
 
-        // Чат с использованием myUsername
+        // ---------- ЧАТ ----------
         const chatMessages = document.getElementById('chatMessages');
         const chatInput = document.getElementById('chatInput');
         const sendChatBtn = document.getElementById('sendChat');
@@ -638,7 +631,7 @@
         socket.on('userJoined', (username) => addMessage('', `${username} присоединился к доске`, true));
         socket.on('userLeft', (username) => addMessage('', `${username} покинул доску`, true));
 
-        // Сокеты рисования
+        // ---------- СОКЕТЫ ДЛЯ РИСОВАНИЯ ----------
         socket.on('loadHistory', (history) => {
             globalHistory = history;
             redrawFull();
@@ -679,7 +672,7 @@
             socket.emit('clear');
         });
 
-        // Адаптация размера холста
+        // ---------- АДАПТАЦИЯ ХОЛСТА ----------
         function resizeCanvas() {
             const container = canvas.parentElement;
             const width = Math.min(1600, container.clientWidth - 40);
@@ -699,7 +692,7 @@
         canvas.addEventListener('touchcancel', onMouseUp);
         resizeCanvas();
 
-        // Отправить серверу свой ник для уведомлений о входе/выходе
+        // Отправить серверу свой ник
         socket.emit('setUsername', myUsername);
     }
 </script>
