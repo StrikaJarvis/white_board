@@ -9,18 +9,15 @@ const io = socketIo(server);
 app.use(express.static('public'));
 
 let drawingHistory = [];
-let connectedUsers = {}; // socket.id -> { username, hasNotified }
+let connectedUsers = {};
 
 io.on('connection', (socket) => {
     console.log('Новый пользователь подключился');
 
     socket.on('setUsername', (username) => {
-        // Если уже установлено имя для этого сокета – игнорируем повтор
         if (connectedUsers[socket.id]) return;
         connectedUsers[socket.id] = { username, hasNotified: false };
-        // Сообщаем всем о новом пользователе
         socket.broadcast.emit('userJoined', username);
-        // Отправляем текущую историю рисования новому пользователю
         socket.emit('loadHistory', drawingHistory);
     });
 
@@ -41,8 +38,8 @@ io.on('connection', (socket) => {
 
     socket.on('undo', () => {
         if (drawingHistory.length > 0) {
-            drawingHistory.pop(); // удаляем последнее действие
-            io.emit('loadHistory', drawingHistory); // рассылаем обновлённую историю всем
+            drawingHistory.pop();
+            io.emit('loadHistory', drawingHistory);
         }
     });
 
