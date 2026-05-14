@@ -16,7 +16,7 @@ io.on('connection', (socket) => {
 
     socket.on('setUsername', (username) => {
         if (connectedUsers[socket.id]) return;
-        connectedUsers[socket.id] = { username, hasNotified: false };
+        connectedUsers[socket.id] = { username };
         socket.broadcast.emit('userJoined', username);
         socket.emit('loadHistory', drawingHistory);
     });
