@@ -9,14 +9,18 @@ const io = socketIo(server);
 app.use(express.static('public'));
 
 let drawingHistory = [];
-let connectedUsers = {}; // socket.id -> username
+let connectedUsers = {}; // socket.id -> { username, hasNotified }
 
 io.on('connection', (socket) => {
     console.log('Новый пользователь подключился');
 
     socket.on('setUsername', (username) => {
-        connectedUsers[socket.id] = username;
+        // Если уже установлено имя для этого сокета – игнорируем повтор
+        if (connectedUsers[socket.id]) return;
+        connectedUsers[socket.id] = { username, hasNotified: false };
+        // Сообщаем всем о новом пользователе
         socket.broadcast.emit('userJoined', username);
+        // Отправляем текущую историю рисования новому пользователю
         socket.emit('loadHistory', drawingHistory);
     });
 
@@ -35,15 +39,21 @@ io.on('connection', (socket) => {
         io.emit('clear');
     });
 
+    socket.on('undo', () => {
+        if (drawingHistory.length > 0) {
+            drawingHistory.pop(); // удаляем последнее действие
+            io.emit('loadHistory', drawingHistory); // рассылаем обновлённую историю всем
+        }
+    });
+
     socket.on('chatMessage', (data) => {
-        // data = { username, message }
         io.emit('chatMessage', data);
     });
 
     socket.on('disconnect', () => {
-        const username = connectedUsers[socket.id];
-        if (username) {
-            io.emit('userLeft', username);
+        const user = connectedUsers[socket.id];
+        if (user) {
+            io.emit('userLeft', user.username);
             delete connectedUsers[socket.id];
         }
         console.log('Пользователь отключился');
